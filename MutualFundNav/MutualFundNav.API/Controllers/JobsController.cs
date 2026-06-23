@@ -22,8 +22,8 @@ namespace MutualFundNav.API.Controllers
             {
                 l.Id,
                 l.JobName,
-                startedAt      = l.StartedAt.ToString("yyyy-MM-dd HH:mm:ss"),
-                completedAt    = l.CompletedAt?.ToString("yyyy-MM-dd HH:mm:ss"),
+                startedAt = l.StartedAt.ToString("yyyy-MM-dd HH:mm:ss"),
+                completedAt = l.CompletedAt?.ToString("yyyy-MM-dd HH:mm:ss"),
                 l.IsSuccess,
                 l.ErrorMessage,
                 elapsedSeconds = Math.Round(l.ElapsedSeconds, 2)
@@ -43,8 +43,8 @@ namespace MutualFundNav.API.Controllers
             {
                 log.Id,
                 log.JobName,
-                startedAt      = log.StartedAt.ToString("yyyy-MM-dd HH:mm:ss"),
-                completedAt    = log.CompletedAt?.ToString("yyyy-MM-dd HH:mm:ss"),
+                startedAt = log.StartedAt.ToString("yyyy-MM-dd HH:mm:ss"),
+                completedAt = log.CompletedAt?.ToString("yyyy-MM-dd HH:mm:ss"),
                 log.IsSuccess,
                 log.ErrorMessage,
                 elapsedSeconds = Math.Round(log.ElapsedSeconds, 2)

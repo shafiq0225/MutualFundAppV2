@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Confluent.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -17,12 +17,14 @@ namespace MutualFundNav.Infrastructure.Services
 
             var config = new ProducerConfig
             {
-                BootstrapServers    = configuration["Kafka:BootstrapServers"] ?? "localhost:9092",
-                Acks                = Acks.All,        // leader + ISR replicas must ack
-                EnableIdempotence   = true,            // exactly-once per partition
+                BootstrapServers = configuration["Kafka:BootstrapServers"] ?? "127.0.0.1:9092",
+                Acks = Acks.All,
+                EnableIdempotence = true,
                 MessageSendMaxRetries = 3,
-                RetryBackoffMs      = 1000,
-                CompressionType     = CompressionType.Snappy
+                RetryBackoffMs = 1000,
+                CompressionType = CompressionType.Snappy,
+                BrokerAddressFamily = BrokerAddressFamily.V4,
+                MessageMaxBytes = 10_485_760   // ← 10 MB (NAV file is ~1.6 MB)
             };
 
             _producer = new ProducerBuilder<string, string>(config)
@@ -34,9 +36,9 @@ namespace MutualFundNav.Infrastructure.Services
         public async Task PublishAsync(
             string topic, string key, T message, CancellationToken ct = default)
         {
-            var json        = JsonSerializer.Serialize(message);
-            var kafkaMsg    = new Message<string, string> { Key = key, Value = json };
-            var result      = await _producer.ProduceAsync(topic, kafkaMsg, ct);
+            var json = JsonSerializer.Serialize(message);
+            var kafkaMsg = new Message<string, string> { Key = key, Value = json };
+            var result = await _producer.ProduceAsync(topic, kafkaMsg, ct);
 
             _logger.LogInformation(
                 "Published to Kafka | topic={Topic} | partition={Partition} | offset={Offset} | key={Key}",

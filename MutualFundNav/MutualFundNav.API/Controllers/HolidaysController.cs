@@ -17,9 +17,9 @@ namespace MutualFundNav.API.Controllers
             INseHolidayFetcher holidayFetcher,
             IUnitOfWork uow)
         {
-            _dateHelper     = dateHelper;
+            _dateHelper = dateHelper;
             _holidayFetcher = holidayFetcher;
-            _uow            = uow;
+            _uow = uow;
         }
 
         /// <summary>Check if a given date is a market trading day.</summary>
@@ -29,9 +29,9 @@ namespace MutualFundNav.API.Controllers
             var isTradingDay = await _dateHelper.IsTradingDayAsync(date);
             return Ok(new
             {
-                date        = date.ToString("yyyy-MM-dd"),
+                date = date.ToString("yyyy-MM-dd"),
                 isTradingDay,
-                dayOfWeek   = date.DayOfWeek.ToString()
+                dayOfWeek = date.DayOfWeek.ToString()
             });
         }
 
@@ -50,7 +50,7 @@ namespace MutualFundNav.API.Controllers
             var holidays = await _uow.MarketHolidays.GetHolidaysForYearAsync(year);
             return Ok(holidays.Select(h => new
             {
-                date        = h.HolidayDate.ToString("yyyy-MM-dd"),
+                date = h.HolidayDate.ToString("yyyy-MM-dd"),
                 h.Description,
                 h.Source
             }));

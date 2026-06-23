@@ -22,11 +22,11 @@ namespace MutualFundNav.API.Controllers
             IConfiguration config,
             ILogger<NavController> logger)
         {
-            _command    = command;
+            _command = command;
             _dateHelper = dateHelper;
-            _uow        = uow;
-            _config     = config;
-            _logger     = logger;
+            _uow = uow;
+            _config = config;
+            _logger = logger;
         }
 
         private string NavTopic =>
@@ -49,13 +49,13 @@ namespace MutualFundNav.API.Controllers
 
             return result.IsSuccess
                 ? Ok(new
-                  {
-                      date      = targetDate.ToString("yyyy-MM-dd"),
-                      wasStored = result.Data,
-                      message   = result.Data
+                {
+                    date = targetDate.ToString("yyyy-MM-dd"),
+                    wasStored = result.Data,
+                    message = result.Data
                                     ? "NAV downloaded and stored successfully"
                                     : "NAV data already exists for this date"
-                  })
+                })
                 : BadRequest(new { error = result.ErrorMessage });
         }
 

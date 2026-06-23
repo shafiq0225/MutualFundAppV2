@@ -10,13 +10,13 @@ namespace MutualFundNav.API.Extensions
             {
                 c.SwaggerDoc("v1", new OpenApiInfo
                 {
-                    Title       = "MutualFundNav API",
-                    Version     = "v1",
+                    Title = "MutualFundNav API",
+                    Version = "v1",
                     Description = "NAV downloader service — downloads AMFI mutual fund NAV data " +
                                   "daily and publishes events to Kafka.",
-                    Contact     = new OpenApiContact
+                    Contact = new OpenApiContact
                     {
-                        Name  = "AMFINAV Team",
+                        Name = "AMFINAV Team",
                         Email = "admin@amfinav.io"
                     }
                 });

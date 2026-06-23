@@ -11,15 +11,15 @@ namespace MutualFundNav.Infrastructure.Data
 
         public UnitOfWork(ApplicationDbContext context)
         {
-            _context       = context;
-            NavFiles       = new NavFileRepository(_context);
+            _context = context;
+            NavFiles = new NavFileRepository(_context);
             MarketHolidays = new MarketHolidayRepository(_context);
-            JobLogs        = new JobExecutionLogRepository(_context);
+            JobLogs = new JobExecutionLogRepository(_context);
         }
 
-        public INavFileRepository         NavFiles       { get; }
-        public IMarketHolidayRepository   MarketHolidays { get; }
-        public IJobExecutionLogRepository JobLogs        { get; }
+        public INavFileRepository NavFiles { get; }
+        public IMarketHolidayRepository MarketHolidays { get; }
+        public IJobExecutionLogRepository JobLogs { get; }
 
         public async Task<int> CompleteAsync() =>
             await _context.SaveChangesAsync();
