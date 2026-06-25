@@ -6,8 +6,10 @@ namespace MutualFundNav.Domain.Interfaces
     {
         Task<bool> ExistsByDateAsync(DateTime date);
         Task AddAsync(NavFile navFile);
+        Task UpdateAsync(NavFile navFile);
         Task<NavFile?> GetByDateAsync(DateTime date);
         Task<IEnumerable<DateTime>> GetAllDatesAsync();
         Task<DateTime?> GetLatestDateAsync();
+        Task<NavFile?> GetLatestAsync();
     }
 }

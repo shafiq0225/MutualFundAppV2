@@ -1,5 +1,6 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using MutualFundNav.Application.UseCases.Commands;
+using MutualFundNav.Domain.Entities;
 using MutualFundNav.Domain.Interfaces;
 
 namespace MutualFundNav.API.Controllers
@@ -34,18 +35,29 @@ namespace MutualFundNav.API.Controllers
 
         /// <summary>
         /// Manually trigger a NAV download for the last trading date.
-        /// Useful for re-runs, testing, and catch-up after a missed schedule.
+        /// Also persists a JobExecutionLog entry for audit trail.
         /// </summary>
         [HttpPost("trigger")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> TriggerDownload(CancellationToken ct)
         {
+            var startedAt = DateTime.UtcNow;
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
             var targetDate = await _dateHelper.GetTargetNavDateAsync();
             _logger.LogInformation("Manual trigger for NAV date {Date}",
                 targetDate.ToString("yyyy-MM-dd"));
 
             var result = await _command.ExecuteAsync(targetDate, NavTopic, ct);
+
+            stopwatch.Stop();
+            await PersistJobLogAsync(
+                "NavController.ManualTrigger",
+                startedAt, stopwatch.Elapsed,
+                result.IsSuccess,
+                result.IsSuccess ? null : result.ErrorMessage,
+                $"Manual trigger for {targetDate:yyyy-MM-dd}");
 
             return result.IsSuccess
                 ? Ok(new
@@ -67,10 +79,21 @@ namespace MutualFundNav.API.Controllers
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> TriggerDownloadForDate(DateTime date, CancellationToken ct)
         {
+            var startedAt = DateTime.UtcNow;
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
             _logger.LogInformation("Manual trigger for specific date {Date}",
                 date.ToString("yyyy-MM-dd"));
 
             var result = await _command.ExecuteAsync(date, NavTopic, ct);
+
+            stopwatch.Stop();
+            await PersistJobLogAsync(
+                "NavController.ManualTrigger",
+                startedAt, stopwatch.Elapsed,
+                result.IsSuccess,
+                result.IsSuccess ? null : result.ErrorMessage,
+                $"Manual trigger for specific date {date:yyyy-MM-dd}");
 
             return result.IsSuccess
                 ? Ok(new { date = date.ToString("yyyy-MM-dd"), wasStored = result.Data })
@@ -105,6 +128,38 @@ namespace MutualFundNav.API.Controllers
         {
             var dates = await _uow.NavFiles.GetAllDatesAsync();
             return Ok(dates.Select(d => d.ToString("yyyy-MM-dd")));
+        }
+
+        // ── Private helpers ────────────────────────────────────────────────
+        private async Task PersistJobLogAsync(
+            string jobName,
+            DateTime startedAt,
+            TimeSpan elapsed,
+            bool success,
+            string? error,
+            string? details = null)
+        {
+            try
+            {
+                var log = new JobExecutionLog
+                {
+                    JobName = jobName,
+                    StartedAt = startedAt,
+                    CompletedAt = DateTime.UtcNow,
+                    IsSuccess = success,
+                    ErrorMessage = error,
+                    ElapsedSeconds = elapsed.TotalSeconds,
+                    Details = details
+                };
+
+                await _uow.JobLogs.AddAsync(log);
+                await _uow.CompleteAsync();
+            }
+            catch (Exception ex)
+            {
+                // Log persistence failure must never break the API response
+                _logger.LogError(ex, "Failed to persist JobExecutionLog for {Job}", jobName);
+            }
         }
     }
 }

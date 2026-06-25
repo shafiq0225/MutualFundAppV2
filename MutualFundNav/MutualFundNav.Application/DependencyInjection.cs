@@ -8,6 +8,7 @@ namespace MutualFundNav.Application
         public static IServiceCollection AddApplication(this IServiceCollection services)
         {
             services.AddScoped<DownloadAndStoreNavCommand>();
+            services.AddScoped<UpsertNavCommand>();
             return services;
         }
     }

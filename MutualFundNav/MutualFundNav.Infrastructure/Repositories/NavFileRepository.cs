@@ -17,6 +17,13 @@ namespace MutualFundNav.Infrastructure.Repositories
         public async Task AddAsync(NavFile navFile) =>
             await _context.NavFiles.AddAsync(navFile);
 
+        public Task UpdateAsync(NavFile navFile)
+        {
+            navFile.UpdatedAt = DateTime.UtcNow;
+            _context.NavFiles.Update(navFile);
+            return Task.CompletedTask;
+        }
+
         public async Task<NavFile?> GetByDateAsync(DateTime date) =>
             await _context.NavFiles
                 .FirstOrDefaultAsync(f => f.NavDate.Date == date.Date);
@@ -30,5 +37,10 @@ namespace MutualFundNav.Infrastructure.Repositories
         public async Task<DateTime?> GetLatestDateAsync() =>
             await _context.NavFiles
                 .MaxAsync(f => (DateTime?)f.NavDate);
+
+        public async Task<NavFile?> GetLatestAsync() =>
+            await _context.NavFiles
+                .OrderByDescending(f => f.NavDate)
+                .FirstOrDefaultAsync();
     }
 }
