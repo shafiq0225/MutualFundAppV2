@@ -147,7 +147,8 @@ namespace MutualFundNav.API.Workers
                 var uow = sp.GetRequiredService<IUnitOfWork>();
                 var kafkaPublisher = sp.GetRequiredService<IKafkaPublisher<MarketHolidayEvent>>();
 
-                await PublishHolidayIfTodayIsHolidayAsync(dateHelper, kafkaPublisher);
+                // Publish any market-holiday event (and persist Kafka publish log)
+                await PublishHolidayIfTodayIsHolidayAsync(dateHelper, kafkaPublisher, uow, jobName);
 
                 var targetDate = await dateHelper.GetTargetNavDateAsync();
                 _logger.LogInformation("Target NAV date: {Date}", targetDate.ToString("yyyy-MM-dd"));
@@ -155,7 +156,8 @@ namespace MutualFundNav.API.Workers
                 var result = await command.ExecuteAsync(
                     targetDate,
                     kafkaTopic: _config["Kafka:Topics:NavFileProcessed"] ?? "nav-file-processed",
-                    ct: ct);
+                    ct: ct,
+                    triggerSource: jobName);
 
                 if (result.IsSuccess)
                 {
@@ -203,7 +205,9 @@ namespace MutualFundNav.API.Workers
 
         private async Task PublishHolidayIfTodayIsHolidayAsync(
             IDateHelper dateHelper,
-            IKafkaPublisher<MarketHolidayEvent> kafkaPublisher)
+            IKafkaPublisher<MarketHolidayEvent> kafkaPublisher,
+            IUnitOfWork uow,
+            string triggerSource)
         {
             var today = DateTime.Today;
             if (today.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday) return;
@@ -218,7 +222,7 @@ namespace MutualFundNav.API.Workers
             try
             {
                 var topic = _config["Kafka:Topics:MarketHoliday"] ?? "market-holidays";
-                await kafkaPublisher.PublishAsync(
+                var publishResult = await kafkaPublisher.PublishAsync(
                     topic: topic,
                     key: today.ToString("yyyy-MM-dd"),
                     message: new MarketHolidayEvent
@@ -226,6 +230,31 @@ namespace MutualFundNav.API.Workers
                         HolidayDate = today,
                         PublishedAt = DateTime.UtcNow
                     });
+
+                // Persist Kafka publish audit record
+                try
+                {
+                    await uow.KafkaPublishLogs.AddAsync(new Domain.Entities.KafkaPublishLog
+                    {
+                        Topic = topic,
+                        EventType = "MarketHoliday",
+                        MessageKey = today.ToString("yyyy-MM-dd"),
+                        MessageSizeBytes = publishResult.MessageSizeBytes,
+                        IsSuccess = publishResult.IsSuccess,
+                        ErrorMessage = publishResult.ErrorMessage,
+                        PublishedAt = DateTime.UtcNow,
+                        ElapsedMs = publishResult.ElapsedMs,
+                        TriggerSource = triggerSource,
+                        NavDate = null,
+                        Partition = publishResult.Partition,
+                        Offset = publishResult.Offset
+                    });
+                    await uow.CompleteAsync();
+                }
+                catch (Exception logEx)
+                {
+                    _logger.LogWarning(logEx, "Failed to persist KafkaPublishLog for MarketHoliday {Date}", today.ToString("yyyy-MM-dd"));
+                }
             }
             catch (Exception ex)
             {

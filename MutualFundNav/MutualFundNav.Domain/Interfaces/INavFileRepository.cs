@@ -20,7 +20,7 @@ namespace MutualFundNav.Domain.Interfaces
 
         /// <summary>
         /// Returns all NAV records ordered newest-first WITHOUT the FileContent
-        /// field populated (set to empty string). Safe to serialise — no MB-sized payload.
+        /// field populated (set to empty string). Safe to serialise ï¿½ no MB-sized payload.
         /// Used by GET /api/nav/history and the Angular UI.
         /// </summary>
         Task<IEnumerable<NavFile>> GetAllSummariesAsync();

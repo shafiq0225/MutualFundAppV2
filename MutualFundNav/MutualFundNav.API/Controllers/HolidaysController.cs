@@ -55,5 +55,41 @@ namespace MutualFundNav.API.Controllers
                 h.Source
             }));
         }
+
+        /// <summary>
+        /// Returns whether today is a holiday or a trading day, and holiday details when applicable.
+        /// </summary>
+        [HttpGet("today")]
+        public async Task<IActionResult> TodayStatus()
+        {
+            var today = DateTime.Today;
+
+            // Weekend is considered non-trading
+            if (today.DayOfWeek is DayOfWeek.Saturday or DayOfWeek.Sunday)
+            {
+                return Ok(new { date = today.ToString("yyyy-MM-dd"), status = "Non-Trading (Weekend)", isHoliday = false });
+            }
+
+            var isTradingDay = await _dateHelper.IsTradingDayAsync(today);
+            if (isTradingDay)
+            {
+                return Ok(new { date = today.ToString("yyyy-MM-dd"), status = "Trading Day", isHoliday = false });
+            }
+
+            var holiday = await _uow.MarketHolidays.GetByDateAsync(today);
+            if (holiday is null)
+            {
+                return Ok(new { date = today.ToString("yyyy-MM-dd"), status = "Non-Trading (Holiday)", isHoliday = true });
+            }
+
+            return Ok(new
+            {
+                date = today.ToString("yyyy-MM-dd"),
+                status = "Holiday",
+                isHoliday = true,
+                description = holiday.Description,
+                source = holiday.Source
+            });
+        }
     }
 }

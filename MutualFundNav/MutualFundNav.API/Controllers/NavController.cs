@@ -11,6 +11,7 @@ namespace MutualFundNav.API.Controllers
     public class NavController : ControllerBase
     {
         private readonly DownloadAndStoreNavCommand _command;
+        private readonly UpsertNavCommand _upsertCommand;
         private readonly IDateHelper _dateHelper;
         private readonly IUnitOfWork _uow;
         private readonly IConfiguration _config;
@@ -18,12 +19,14 @@ namespace MutualFundNav.API.Controllers
 
         public NavController(
             DownloadAndStoreNavCommand command,
+            UpsertNavCommand upsertCommand,
             IDateHelper dateHelper,
             IUnitOfWork uow,
             IConfiguration config,
             ILogger<NavController> logger)
         {
             _command = command;
+            _upsertCommand = upsertCommand;
             _dateHelper = dateHelper;
             _uow = uow;
             _config = config;
@@ -40,7 +43,7 @@ namespace MutualFundNav.API.Controllers
         [HttpPost("trigger")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> TriggerDownload(CancellationToken ct)
+        public async Task<IActionResult> TriggerDownload([FromQuery] bool replace = false, CancellationToken ct = default)
         {
             var startedAt = DateTime.UtcNow;
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -49,7 +52,32 @@ namespace MutualFundNav.API.Controllers
             _logger.LogInformation("Manual trigger for NAV date {Date}",
                 targetDate.ToString("yyyy-MM-dd"));
 
-            var result = await _command.ExecuteAsync(targetDate, NavTopic, ct);
+            if (replace)
+            {
+                var upsertResult = await _upsertCommand.ExecuteAsync(targetDate, NavTopic, "NavController.ManualUpsert", ct: ct);
+
+                stopwatch.Stop();
+                await PersistJobLogAsync(
+                    "NavController.ManualUpsert",
+                    startedAt, stopwatch.Elapsed,
+                    upsertResult.IsSuccess,
+                    upsertResult.IsSuccess ? null : upsertResult.ErrorMessage,
+                    $"Manual upsert for {targetDate:yyyy-MM-dd}");
+
+                return upsertResult.IsSuccess
+                    ? Ok(new
+                    {
+                        date = targetDate.ToString("yyyy-MM-dd"),
+                        wasReplaced = upsertResult.Data.WasReplaced,
+                        recordCount = upsertResult.Data.RecordCount,
+                        checksum = upsertResult.Data.Checksum,
+                        kafkaPublished = upsertResult.Data.KafkaPublished,
+                        kafkaError = upsertResult.Data.KafkaErrorMessage
+                    })
+                    : BadRequest(new { error = upsertResult.ErrorMessage });
+            }
+
+            var result = await _command.ExecuteAsync(targetDate, NavTopic, ct: ct, triggerSource: "NavController.ManualTrigger");
 
             stopwatch.Stop();
             await PersistJobLogAsync(
@@ -77,7 +105,7 @@ namespace MutualFundNav.API.Controllers
         [HttpPost("trigger/{date:datetime}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> TriggerDownloadForDate(DateTime date, CancellationToken ct)
+        public async Task<IActionResult> TriggerDownloadForDate(DateTime date, [FromQuery] bool replace = false, CancellationToken ct = default)
         {
             var startedAt = DateTime.UtcNow;
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
@@ -85,7 +113,24 @@ namespace MutualFundNav.API.Controllers
             _logger.LogInformation("Manual trigger for specific date {Date}",
                 date.ToString("yyyy-MM-dd"));
 
-            var result = await _command.ExecuteAsync(date, NavTopic, ct);
+            if (replace)
+            {
+                var upsertResult = await _upsertCommand.ExecuteAsync(date, NavTopic, "NavController.ManualUpsert", ct: ct);
+
+                stopwatch.Stop();
+                await PersistJobLogAsync(
+                    "NavController.ManualUpsert",
+                    startedAt, stopwatch.Elapsed,
+                    upsertResult.IsSuccess,
+                    upsertResult.IsSuccess ? null : upsertResult.ErrorMessage,
+                    $"Manual upsert for specific date {date:yyyy-MM-dd}");
+
+                return upsertResult.IsSuccess
+                    ? Ok(new { date = date.ToString("yyyy-MM-dd"), wasReplaced = upsertResult.Data.WasReplaced })
+                    : BadRequest(new { error = upsertResult.ErrorMessage });
+            }
+
+            var result = await _command.ExecuteAsync(date, NavTopic, ct: ct, triggerSource: "NavController.ManualTriggerForDate");
 
             stopwatch.Stop();
             await PersistJobLogAsync(
@@ -128,6 +173,47 @@ namespace MutualFundNav.API.Controllers
         {
             var dates = await _uow.NavFiles.GetAllDatesAsync();
             return Ok(dates.Select(d => d.ToString("yyyy-MM-dd")));
+        }
+
+        [HttpGet("history")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetHistory()
+        {
+            var history = await _uow.NavFiles.GetAllSummariesAsync();
+            return Ok(history.Select(f => new
+            {
+                id = f.Id,
+                navDate = f.NavDate.ToString("yyyy-MM-dd"),
+                fileSizeBytes = f.FileSizeBytes,
+                recordCount = f.RecordCount,
+                checksum = f.Checksum,
+                downloadedAt = f.DownloadedAt.ToString("o"),
+                isHoliday = f.IsHoliday
+            }));
+        }
+
+        /// <summary>
+        /// Retrieve NAV file content by the DownloadedAt date (UTC date part match).
+        /// Example: GET /api/nav/content?downloadedAt=2026-06-24
+        /// </summary>
+        [HttpGet("content")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> GetContent([FromQuery] DateTime? downloadedAt = null)
+        {
+            var queryDate = (downloadedAt ?? DateTime.UtcNow).Date;
+            var nav = await _uow.NavFiles.GetByDownloadedAtAsync(queryDate);
+            if (nav is null) return NotFound(new { message = "No NAV file found for the specified DownloadedAt date" });
+
+            return Ok(new
+            {
+                navDate = nav.NavDate.ToString("yyyy-MM-dd"),
+                downloadedAt = nav.DownloadedAt.ToString("o"),
+                fileContent = nav.FileContent,
+                recordCount = nav.RecordCount,
+                sizeBytes = nav.FileSizeBytes,
+                checksum = nav.Checksum
+            });
         }
 
         // ── Private helpers ────────────────────────────────────────────────

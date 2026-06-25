@@ -1,0 +1,86 @@
+<div class="section">
+  <div class="section-header">
+    <div>
+      <h2>Job Logs</h2>
+      <p class="subtitle">Every scheduled and manual run — click a row to see error details</p>
+    </div>
+    <div class="header-right">
+      <select [(ngModel)]="count" (change)="load()" class="count-sel">
+        <option [value]="20">Last 20</option>
+        <option [value]="50">Last 50</option>
+        <option [value]="100">Last 100</option>
+      </select>
+      <button class="btn-reload" (click)="load()">⟳ Refresh</button>
+    </div>
+  </div>
+
+  <div class="api-error" *ngIf="error">
+    <strong>⚠ {{ error }}</strong>
+    <p *ngIf="errorDetail">{{ errorDetail }}</p>
+  </div>
+
+  <div class="loading-row" *ngIf="loading">Loading job logs...</div>
+
+  <div *ngIf="!loading && !error">
+    <div class="summary-pills">
+      <span class="pill green">✓ {{ successCount }} succeeded</span>
+      <span class="pill red" *ngIf="failureCount > 0">✗ {{ failureCount }} failed</span>
+      <span class="pill grey">{{ logs.length }} total</span>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Job Name</th>
+            <th>Started At</th>
+            <th>Completed At</th>
+            <th>Duration</th>
+            <th>Error</th>
+          </tr>
+        </thead>
+        <tbody>
+          <ng-container *ngFor="let log of logs">
+            <tr [class.success-row]="log.isSuccess" [class.failure-row]="!log.isSuccess"
+                [class.clickable]="!log.isSuccess" (click)="toggle(log.id)">
+              <td class="center">
+                <span class="status-dot" [class.green]="log.isSuccess" [class.red]="!log.isSuccess"></span>
+                {{ log.isSuccess ? 'OK' : 'FAIL' }}
+              </td>
+              <td>{{ log.jobName }}</td>
+              <td>{{ formatDate(log.startedAt) }}</td>
+              <td>{{ formatDate(log.completedAt) }}</td>
+              <td class="num">{{ duration(log) }}</td>
+              <td class="error-col">
+                <span *ngIf="log.errorMessage" class="error-preview">
+                  {{ log.errorMessage | slice:0:60 }}{{ log.errorMessage!.length > 60 ? '…' : '' }}
+                  <span class="expand-hint">(click to expand)</span>
+                </span>
+                <span *ngIf="!log.errorMessage" class="ok-text">—</span>
+              </td>
+            </tr>
+            <!-- Expanded error row -->
+            <tr *ngIf="expandedId === log.id" class="detail-row">
+              <td colspan="6">
+                <div class="error-detail-box">
+                  <strong>Error Message:</strong>
+                  <pre>{{ log.errorMessage }}</pre>
+                  <div *ngIf="log.details">
+                    <strong>Details:</strong>
+                    <pre>{{ log.details }}</pre>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+          <tr *ngIf="logs.length === 0">
+            <td colspan="6" class="empty">
+              No job logs yet. Logs appear after 08:30 scheduled runs or manual API triggers.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>

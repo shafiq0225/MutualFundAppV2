@@ -1,0 +1,91 @@
+<div class="dashboard">
+
+  <!-- Error Banner -->
+  <div class="error-banner" *ngIf="error">
+    <span class="error-icon">⚠</span>
+    <div>
+      <strong>API Connection Error</strong>
+      <p>{{ error }}</p>
+      <small>Check that the API is running at the configured base URL and CORS is enabled.</small>
+    </div>
+    <button class="btn-retry" (click)="load()">Retry</button>
+  </div>
+
+  <!-- Stat Cards -->
+  <div class="cards">
+
+    <div class="card" [class.loading]="loading">
+      <div class="card-label">Last NAV Date</div>
+      <div class="card-value">{{ loading ? '...' : formatDate(latestNavDate) }}</div>
+      <div class="card-sub">{{ loading ? '' : formatTime(latestNavDate) }}</div>
+    </div>
+
+    <div class="card" [class.loading]="loading">
+      <div class="card-label">Next Scheduled Run</div>
+      <div class="card-value countdown">{{ countdown }}</div>
+      <div class="card-sub">Daily at 08:30 IST</div>
+    </div>
+
+    <div class="card" [class.loading]="loading" [ngClass]="jobStatusClass">
+      <div class="card-label">Last Job Status</div>
+      <div class="card-value status-val">
+        <span class="status-dot" [ngClass]="jobStatusClass"></span>
+        {{ loading ? '...' : jobStatusLabel }}
+      </div>
+      <div class="card-sub" *ngIf="latestJob">
+        {{ formatDate(latestJob.startedAt) }} · {{ latestJob.elapsedSeconds | number:'1.1-1' }}s
+      </div>
+      <div class="card-error" *ngIf="latestJob && !latestJob.isSuccess && latestJob.errorMessage">
+        {{ latestJob.errorMessage }}
+      </div>
+    </div>
+
+    <div class="card" [class.loading]="loading">
+      <div class="card-label">Target Date</div>
+      <div class="card-value">{{ loading ? '...' : formatDate(targetDate) }}</div>
+      <div class="card-sub">Next date to download</div>
+    </div>
+
+  </div>
+
+  <!-- Trigger Panel -->
+  <div class="trigger-panel">
+    <h3>Manual Trigger</h3>
+
+    <div class="trigger-row">
+      <button class="btn-primary" (click)="trigger()" [disabled]="triggering">
+        <span *ngIf="!triggering">⚡ Trigger Latest NAV</span>
+        <span *ngIf="triggering">Downloading...</span>
+      </button>
+
+      <div class="trigger-date-row">
+        <input type="date" [(ngModel)]="customTriggerDate" placeholder="Pick a date" />
+        <button class="btn-secondary" (click)="trigger(customTriggerDate)"
+          [disabled]="triggering || !customTriggerDate">
+          Trigger for Date
+        </button>
+      </div>
+    </div>
+
+    <div class="trigger-result success-msg" *ngIf="triggerResult?.success">
+      {{ triggerResult?.message }}
+    </div>
+    <div class="trigger-result error-msg" *ngIf="triggerResult && !triggerResult.success">
+      {{ triggerResult?.message }}
+    </div>
+  </div>
+
+  <!-- Last Job Detail -->
+  <div class="job-detail" *ngIf="latestJob && !latestJob.isSuccess">
+    <h3>⚠ Last Job Error Details</h3>
+    <table class="detail-table">
+      <tr><td>Job Name</td><td>{{ latestJob.jobName }}</td></tr>
+      <tr><td>Started At</td><td>{{ latestJob.startedAt | date:'dd-MMM-yyyy HH:mm:ss' }}</td></tr>
+      <tr><td>Duration</td><td>{{ latestJob.elapsedSeconds | number:'1.2-2' }}s</td></tr>
+      <tr><td>Error</td><td class="error-text">{{ latestJob.errorMessage }}</td></tr>
+      <tr *ngIf="latestJob.details"><td>Details</td><td class="error-text">{{ latestJob.details }}</td></tr>
+    </table>
+    <p class="hint">Go to the <strong>Job Logs</strong> tab for full history.</p>
+  </div>
+
+</div>
