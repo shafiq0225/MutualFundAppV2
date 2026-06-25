@@ -8,9 +8,10 @@ namespace MutualFundNav.Infrastructure.Data
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
             : base(options) { }
 
-        public DbSet<NavFile>         NavFiles        { get; set; }
-        public DbSet<MarketHoliday>   MarketHolidays  { get; set; }
+        public DbSet<NavFile> NavFiles { get; set; }
+        public DbSet<MarketHoliday> MarketHolidays { get; set; }
         public DbSet<JobExecutionLog> JobExecutionLogs { get; set; }
+        public DbSet<KafkaPublishLog> KafkaPublishLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -49,6 +50,22 @@ namespace MutualFundNav.Infrastructure.Data
                 e.Property(x => x.JobName).HasMaxLength(128).IsRequired();
                 e.Property(x => x.ErrorMessage).HasMaxLength(2048);
                 e.Property(x => x.Details).HasMaxLength(4096);
+                e.Property(x => x.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
+            });
+
+            // ── KafkaPublishLog ────────────────────────────────────────────
+            modelBuilder.Entity<KafkaPublishLog>(e =>
+            {
+                e.HasKey(x => x.Id);
+                e.HasIndex(x => x.PublishedAt);
+                e.HasIndex(x => x.NavDate);
+                e.HasIndex(x => x.IsSuccess);
+                e.Property(x => x.Topic).HasMaxLength(256).IsRequired();
+                e.Property(x => x.EventType).HasMaxLength(64).IsRequired();
+                e.Property(x => x.MessageKey).HasMaxLength(64).IsRequired();
+                e.Property(x => x.TriggerSource).HasMaxLength(128).IsRequired();
+                e.Property(x => x.ErrorMessage).HasMaxLength(2048);
+                e.Property(x => x.PublishedAt).IsRequired();
                 e.Property(x => x.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             });
         }

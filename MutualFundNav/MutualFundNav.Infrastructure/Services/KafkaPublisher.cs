@@ -1,7 +1,10 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics;
+using System.Text;
+using System.Text.Json;
 using Confluent.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using MutualFundNav.Domain.Contracts;
 using MutualFundNav.Domain.Interfaces;
 
 namespace MutualFundNav.Infrastructure.Services
@@ -24,25 +27,57 @@ namespace MutualFundNav.Infrastructure.Services
                 RetryBackoffMs = 1000,
                 CompressionType = CompressionType.Snappy,
                 BrokerAddressFamily = BrokerAddressFamily.V4,
-                MessageMaxBytes = 10_485_760   // ← 10 MB (NAV file is ~1.6 MB)
+                MessageMaxBytes = 20_971_520   // 20 MB — AMFI NAV file is ~1.6 MB uncompressed
             };
 
             _producer = new ProducerBuilder<string, string>(config)
                 .SetErrorHandler((_, e) =>
-                    _logger.LogError("Kafka producer error: {Reason}", e.Reason))
+                    _logger.LogError("Kafka producer error [{Code}]: {Reason}", e.Code, e.Reason))
                 .Build();
         }
 
-        public async Task PublishAsync(
+        /// <summary>
+        /// Publishes <paramref name="message"/> to Kafka and returns a <see cref="KafkaPublishResult"/>.
+        /// This method never throws — delivery failures are captured in the result so callers
+        /// can persist them to <c>KafkaPublishLogs</c> without an additional try/catch.
+        /// </summary>
+        public async Task<KafkaPublishResult> PublishAsync(
             string topic, string key, T message, CancellationToken ct = default)
         {
             var json = JsonSerializer.Serialize(message);
+            var sizeBytes = (long)Encoding.UTF8.GetByteCount(json);
             var kafkaMsg = new Message<string, string> { Key = key, Value = json };
-            var result = await _producer.ProduceAsync(topic, kafkaMsg, ct);
+            var sw = Stopwatch.StartNew();
 
-            _logger.LogInformation(
-                "Published to Kafka | topic={Topic} | partition={Partition} | offset={Offset} | key={Key}",
-                result.Topic, result.Partition.Value, result.Offset.Value, key);
+            try
+            {
+                var result = await _producer.ProduceAsync(topic, kafkaMsg, ct);
+                sw.Stop();
+
+                _logger.LogInformation(
+                    "Kafka publish OK | topic={Topic} | partition={P} | offset={O} | key={Key} | {Bytes} bytes | {Ms}ms",
+                    result.Topic, result.Partition.Value, result.Offset.Value, key,
+                    sizeBytes, (int)sw.Elapsed.TotalMilliseconds);
+
+                return KafkaPublishResult.Succeeded(
+                    result.Partition.Value,
+                    result.Offset.Value,
+                    sw.Elapsed.TotalMilliseconds,
+                    sizeBytes);
+            }
+            catch (Exception ex)
+            {
+                sw.Stop();
+
+                _logger.LogError(ex,
+                    "Kafka publish FAILED | topic={Topic} | key={Key} | {Bytes} bytes | {Ms}ms",
+                    topic, key, sizeBytes, (int)sw.Elapsed.TotalMilliseconds);
+
+                return KafkaPublishResult.Failed(
+                    ex.Message,
+                    sw.Elapsed.TotalMilliseconds,
+                    sizeBytes);
+            }
         }
 
         public void Dispose()

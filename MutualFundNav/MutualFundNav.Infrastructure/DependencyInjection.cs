@@ -22,10 +22,11 @@ namespace MutualFundNav.Infrastructure
                     b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName)));
 
             // ── Repositories + UoW ─────────────────────────────────────────
-            services.AddScoped<INavFileRepository,         NavFileRepository>();
-            services.AddScoped<IMarketHolidayRepository,   MarketHolidayRepository>();
-            services.AddScoped<IJobExecutionLogRepository,  JobExecutionLogRepository>();
-            services.AddScoped<IUnitOfWork,                UnitOfWork>();
+            services.AddScoped<INavFileRepository, NavFileRepository>();
+            services.AddScoped<IMarketHolidayRepository, MarketHolidayRepository>();
+            services.AddScoped<IJobExecutionLogRepository, JobExecutionLogRepository>();
+            services.AddScoped<IKafkaPublishLogRepository, KafkaPublishLogRepository>();
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             // ── HTTP Services ──────────────────────────────────────────────
             services.AddHttpClient<INavDownloadService, NavDownloadService>(client =>
@@ -44,7 +45,7 @@ namespace MutualFundNav.Infrastructure
             })
             .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
             {
-                UseCookies      = true,
+                UseCookies = true,
                 CookieContainer = new System.Net.CookieContainer()
             });
 

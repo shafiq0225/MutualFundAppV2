@@ -23,5 +23,13 @@ namespace MutualFundNav.Infrastructure.Repositories
                 .Where(h => h.HolidayDate.Year == year)
                 .OrderBy(h => h.HolidayDate)
                 .ToListAsync();
+
+        /// <summary>
+        /// Returns the <see cref="MarketHoliday"/> entry for the given date,
+        /// or null when it is a trading day.
+        /// </summary>
+        public async Task<MarketHoliday?> GetByDateAsync(DateTime date) =>
+            await _context.MarketHolidays
+                .FirstOrDefaultAsync(h => h.HolidayDate.Date == date.Date);
     }
 }

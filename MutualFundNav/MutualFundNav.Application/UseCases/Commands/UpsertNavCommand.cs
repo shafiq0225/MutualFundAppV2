@@ -11,7 +11,9 @@ namespace MutualFundNav.Application.UseCases.Commands
 {
     /// <summary>
     /// Downloads NAV data and UPSERTS into the database.
-    /// If data already exists for the date it is REPLACED and re-published to Kafka.
+    /// If data already exists for the date it is REPLACED with the latest download.
+    /// Always publishes to Kafka after a successful upsert and persists a
+    /// <see cref="KafkaPublishLog"/> row regardless of publish outcome.
     /// Used by the manual "force refresh" endpoint.
     /// </summary>
     public class UpsertNavCommand
@@ -33,9 +35,14 @@ namespace MutualFundNav.Application.UseCases.Commands
             _logger = logger;
         }
 
+        /// <param name="targetDate">NAV date to upsert.</param>
+        /// <param name="kafkaTopic">Topic to publish to.</param>
+        /// <param name="triggerSource">Identifies the caller — stored in KafkaPublishLog.</param>
+        /// <param name="ct">Cancellation token.</param>
         public async Task<Result<UpsertNavResult>> ExecuteAsync(
             DateTime targetDate,
             string kafkaTopic = "nav-file-processed",
+            string triggerSource = "Unknown",
             CancellationToken ct = default)
         {
             _logger.LogInformation("Upsert NAV for {Date}", targetDate.ToString("yyyy-MM-dd"));
@@ -53,7 +60,7 @@ namespace MutualFundNav.Application.UseCases.Commands
             var checksum = ComputeChecksum(content);
             bool wasReplaced = false;
 
-            // ── Upsert ────────────────────────────────────────────────────
+            // ── Upsert (transactional) ────────────────────────────────────
             try
             {
                 await _unitOfWork.BeginTransactionAsync();
@@ -62,7 +69,6 @@ namespace MutualFundNav.Application.UseCases.Commands
 
                 if (existing is not null)
                 {
-                    // Replace
                     existing.FileContent = content;
                     existing.FileSizeBytes = (long)Encoding.UTF8.GetByteCount(content);
                     existing.RecordCount = recordCount;
@@ -70,12 +76,12 @@ namespace MutualFundNav.Application.UseCases.Commands
                     existing.DownloadedAt = DateTime.UtcNow;
                     await _unitOfWork.NavFiles.UpdateAsync(existing);
                     wasReplaced = true;
-                    _logger.LogInformation("Replaced existing NAV for {Date}", targetDate.ToString("yyyy-MM-dd"));
+                    _logger.LogInformation("Replaced existing NAV for {Date}",
+                        targetDate.ToString("yyyy-MM-dd"));
                 }
                 else
                 {
-                    // Insert
-                    var navFile = new NavFile
+                    await _unitOfWork.NavFiles.AddAsync(new NavFile
                     {
                         NavDate = targetDate,
                         FileContent = content,
@@ -83,13 +89,13 @@ namespace MutualFundNav.Application.UseCases.Commands
                         RecordCount = recordCount,
                         Checksum = checksum,
                         DownloadedAt = DateTime.UtcNow
-                    };
-                    await _unitOfWork.NavFiles.AddAsync(navFile);
-                    _logger.LogInformation("Inserted new NAV for {Date}", targetDate.ToString("yyyy-MM-dd"));
+                    });
+                    _logger.LogInformation("Inserted new NAV for {Date}",
+                        targetDate.ToString("yyyy-MM-dd"));
                 }
 
                 await _unitOfWork.CompleteAsync();
-                await _unitOfWork.CommitTransactionAsync();
+                await _unitOfWork.CommitTransactionAsync(); // disposes + nulls _transaction
             }
             catch (Exception ex)
             {
@@ -99,30 +105,58 @@ namespace MutualFundNav.Application.UseCases.Commands
             }
 
             // ── Publish to Kafka ──────────────────────────────────────────
-            try
-            {
-                var navEvent = new NavFileProcessedEvent
+            var messageKey = targetDate.ToString("yyyy-MM-dd");
+
+            var publishResult = await _kafkaPublisher.PublishAsync(
+                topic: kafkaTopic,
+                key: messageKey,
+                message: new NavFileProcessedEvent
                 {
                     NavDate = targetDate,
                     FileContent = content,
                     RecordCount = recordCount,
                     Checksum = checksum,
                     PublishedAt = DateTime.UtcNow
-                };
+                },
+                ct: ct);
 
-                await _kafkaPublisher.PublishAsync(
-                    topic: kafkaTopic,
-                    key: targetDate.ToString("yyyy-MM-dd"),
-                    message: navEvent,
-                    ct: ct);
-
-                _logger.LogInformation(
-                    "Published NavFileProcessedEvent (upsert) for {Date}",
-                    targetDate.ToString("yyyy-MM-dd"));
-            }
-            catch (Exception ex)
+            if (!publishResult.IsSuccess)
             {
-                _logger.LogWarning(ex, "NAV upserted but Kafka publish failed for {Date}",
+                _logger.LogWarning(
+                    "NAV upserted but Kafka publish failed for {Date}: {Error}",
+                    targetDate.ToString("yyyy-MM-dd"), publishResult.ErrorMessage);
+            }
+            else
+            {
+                _logger.LogInformation(
+                    "Published NavFileProcessedEvent (upsert) for {Date} — partition={P} offset={O}",
+                    targetDate.ToString("yyyy-MM-dd"),
+                    publishResult.Partition, publishResult.Offset);
+            }
+
+            // ── Persist Kafka publish log ─────────────────────────────────
+            try
+            {
+                await _unitOfWork.KafkaPublishLogs.AddAsync(new KafkaPublishLog
+                {
+                    Topic = kafkaTopic,
+                    EventType = "NavFileProcessed",
+                    MessageKey = messageKey,
+                    MessageSizeBytes = publishResult.MessageSizeBytes,
+                    IsSuccess = publishResult.IsSuccess,
+                    ErrorMessage = publishResult.ErrorMessage,
+                    PublishedAt = DateTime.UtcNow,
+                    ElapsedMs = publishResult.ElapsedMs,
+                    TriggerSource = triggerSource,
+                    NavDate = targetDate,
+                    Partition = publishResult.Partition,
+                    Offset = publishResult.Offset
+                });
+                await _unitOfWork.CompleteAsync();
+            }
+            catch (Exception logEx)
+            {
+                _logger.LogError(logEx, "Failed to persist KafkaPublishLog for {Date}",
                     targetDate.ToString("yyyy-MM-dd"));
             }
 
@@ -131,7 +165,9 @@ namespace MutualFundNav.Application.UseCases.Commands
                 Date = targetDate,
                 WasReplaced = wasReplaced,
                 RecordCount = recordCount,
-                Checksum = checksum
+                Checksum = checksum,
+                KafkaPublished = publishResult.IsSuccess,
+                KafkaErrorMessage = publishResult.ErrorMessage
             });
         }
 
@@ -148,5 +184,7 @@ namespace MutualFundNav.Application.UseCases.Commands
         public bool WasReplaced { get; set; }
         public int RecordCount { get; set; }
         public string Checksum { get; set; } = string.Empty;
+        public bool KafkaPublished { get; set; }
+        public string? KafkaErrorMessage { get; set; }
     }
 }

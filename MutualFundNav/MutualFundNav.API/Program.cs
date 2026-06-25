@@ -53,8 +53,9 @@ try
     // CanConnectAsync() throws HostAbortedException and blocks migration scaffolding.
     // EF design-time tooling injects "--applicationName" when it boots the host.
     // Detect it and skip the live DB check to avoid HostAbortedException.
-    bool isDesignTime = args.Any(a =>
-        a.Contains("--applicationName", StringComparison.OrdinalIgnoreCase));
+    bool isDesignTime = AppDomain.CurrentDomain
+    .GetAssemblies()
+    .Any(a => a.FullName?.Contains("EntityFrameworkCore.Design") == true);
 
     if (!isDesignTime)
     {

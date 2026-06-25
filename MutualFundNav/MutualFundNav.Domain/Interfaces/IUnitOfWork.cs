@@ -5,6 +5,8 @@ namespace MutualFundNav.Domain.Interfaces
         INavFileRepository NavFiles { get; }
         IMarketHolidayRepository MarketHolidays { get; }
         IJobExecutionLogRepository JobLogs { get; }
+        IKafkaPublishLogRepository KafkaPublishLogs { get; }
+
         Task<int> CompleteAsync();
         Task BeginTransactionAsync();
         Task CommitTransactionAsync();
