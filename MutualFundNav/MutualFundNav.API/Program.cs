@@ -41,9 +41,16 @@ try
     builder.Services.AddHostedService<NavDownloadWorker>();
 
     // ── CORS (tighten in production) ────────────────────────────────────
+    // ── CORS (config-driven) ────────────────────────────────────────────
+    var allowedOrigins = builder.Configuration
+        .GetSection("Cors:AllowedOrigins")
+        .Get<string[]>() ?? [];
+
     builder.Services.AddCors(opts =>
         opts.AddPolicy("Default", policy =>
-            policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader()));
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()));
 
     var app = builder.Build();
 
@@ -80,15 +87,14 @@ try
     app.UseSerilogRequestLogging();
     app.UseCors("Default");
 
-    if (app.Environment.IsDevelopment())
+
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
     {
-        app.UseSwagger();
-        app.UseSwaggerUI(c =>
-        {
-            c.SwaggerEndpoint("/swagger/v1/swagger.json", "MutualFundNav API v1");
-            c.RoutePrefix = string.Empty; // Swagger at root
-        });
-    }
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "MutualFundNav API v1");
+        c.RoutePrefix = string.Empty; // Swagger at root
+    });
+
 
     app.UseHttpsRedirection();
     app.UseAuthorization();

@@ -1,0 +1,614 @@
+// ── Design Tokens ─────────────────────────────────────────────────────────
+$bg: #0f1117;
+$surface: #181c25;
+$surface2: #1e2333;
+$border: #2a3045;
+$accent: #3b82f6;
+$accent-dim: #1d4ed8;
+$green: #22c55e;
+$red: #ef4444;
+$amber: #f59e0b;
+$text: #e2e8f0;
+$text-dim: #94a3b8;
+$text-muted: #64748b;
+$radius: 8px;
+$font: "Inter", system-ui, sans-serif;
+$font-mono: "JetBrains Mono", "Fira Code", monospace;
+
+// ── Reset ──────────────────────────────────────────────────────────────────
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+// ── Root ───────────────────────────────────────────────────────────────────
+.monitor {
+  font-family: $font;
+  background: $bg;
+  color: $text;
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+// ── Header ─────────────────────────────────────────────────────────────────
+.monitor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  background: $surface;
+  border-bottom: 1px solid $border;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  .header-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand-badge {
+    width: 36px;
+    height: 36px;
+    background: $accent;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    color: #fff;
+    flex-shrink: 0;
+  }
+
+  .brand-title {
+    font-weight: 600;
+    font-size: 15px;
+    color: $text;
+  }
+
+  .brand-sub {
+    font-size: 11px;
+    color: $text-muted;
+    margin-top: 1px;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: $green;
+    animation: pulse 2s infinite;
+  }
+
+  .live-label {
+    font-size: 12px;
+    color: $green;
+    font-weight: 500;
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.4;
+  }
+}
+
+// ── Global Error ───────────────────────────────────────────────────────────
+.global-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba($red, 0.1);
+  border: 1px solid rgba($red, 0.3);
+  border-radius: $radius;
+  padding: 16px;
+  margin: 16px 24px;
+  color: $text;
+
+  span {
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  strong {
+    color: #fca5a5;
+  }
+  p {
+    font-size: 13px;
+    color: $text-dim;
+    margin-top: 4px;
+  }
+
+  button {
+    margin-left: auto;
+    padding: 6px 14px;
+    background: rgba($red, 0.2);
+    border: 1px solid rgba($red, 0.4);
+    border-radius: 6px;
+    color: #fca5a5;
+    cursor: pointer;
+    font-size: 13px;
+    white-space: nowrap;
+    &:hover {
+      background: rgba($red, 0.3);
+    }
+  }
+}
+
+// ── Body ───────────────────────────────────────────────────────────────────
+.monitor-body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+// ── Section ────────────────────────────────────────────────────────────────
+.section {
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: $radius;
+  overflow: hidden;
+}
+
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px;
+  font-weight: 600;
+  font-size: 14px;
+  background: $surface2;
+  border-bottom: 1px solid $border;
+  color: $text;
+
+  .section-icon {
+    font-size: 16px;
+  }
+
+  .section-count {
+    margin-left: auto;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 400;
+    color: $text-muted;
+  }
+}
+
+// ── Cards ──────────────────────────────────────────────────────────────────
+.cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0;
+  border-bottom: 1px solid $border;
+
+  .card {
+    padding: 20px;
+    border-right: 1px solid $border;
+    transition: background 0.2s;
+
+    &:last-child {
+      border-right: none;
+    }
+
+    &.loading .card-value {
+      opacity: 0.4;
+    }
+
+    &.success {
+      border-top: 2px solid $green;
+    }
+    &.failure {
+      border-top: 2px solid $red;
+    }
+
+    .card-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: $text-muted;
+      margin-bottom: 8px;
+    }
+
+    .card-value {
+      font-size: 22px;
+      font-weight: 600;
+      color: $text;
+      line-height: 1.2;
+
+      &.countdown {
+        font-family: $font-mono;
+        font-size: 18px;
+        color: $accent;
+      }
+    }
+
+    .card-sub {
+      font-size: 11px;
+      color: $text-muted;
+      margin-top: 4px;
+    }
+  }
+}
+
+.status-val {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+// ── Trigger Panel ──────────────────────────────────────────────────────────
+.trigger-panel {
+  padding: 20px;
+
+  .trigger-panel-title {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: $text-muted;
+    margin-bottom: 12px;
+  }
+
+  .trigger-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .trigger-date-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+
+    input[type="date"] {
+      background: $surface2;
+      border: 1px solid $border;
+      border-radius: 6px;
+      padding: 7px 12px;
+      color: $text;
+      font-size: 13px;
+      &:focus {
+        outline: none;
+        border-color: $accent;
+      }
+    }
+  }
+
+  .trigger-result {
+    margin-top: 12px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+
+    &.success {
+      background: rgba($green, 0.1);
+      border: 1px solid rgba($green, 0.3);
+      color: #86efac;
+    }
+    &.error {
+      background: rgba($red, 0.1);
+      border: 1px solid rgba($red, 0.3);
+      color: #fca5a5;
+    }
+  }
+}
+
+// ── Table Toolbar ──────────────────────────────────────────────────────────
+.table-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-bottom: 1px solid $border;
+  background: $surface2;
+}
+
+.search-input {
+  background: $bg;
+  border: 1px solid $border;
+  border-radius: 6px;
+  padding: 6px 12px;
+  color: $text;
+  font-size: 13px;
+  width: 220px;
+  &:focus {
+    outline: none;
+    border-color: $accent;
+  }
+  &::placeholder {
+    color: $text-muted;
+  }
+}
+
+.count-sel {
+  background: $bg;
+  border: 1px solid $border;
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: $text;
+  font-size: 13px;
+  cursor: pointer;
+  &:focus {
+    outline: none;
+    border-color: $accent;
+  }
+}
+
+// ── Table ──────────────────────────────────────────────────────────────────
+.table-wrap {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  thead tr {
+    background: $surface2;
+    border-bottom: 1px solid $border;
+  }
+
+  th {
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: $text-muted;
+    cursor: pointer;
+    white-space: nowrap;
+    &:hover {
+      color: $text;
+    }
+  }
+
+  td {
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba($border, 0.5);
+    color: $text-dim;
+    white-space: nowrap;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  tr:hover td {
+    background: rgba($accent, 0.04);
+  }
+
+  .num {
+    font-family: $font-mono;
+    font-size: 12px;
+  }
+  .center {
+    text-align: center;
+  }
+
+  .success-row td {
+    background: rgba($green, 0.03);
+  }
+  .failure-row td {
+    background: rgba($red, 0.04);
+  }
+  .holiday-row td {
+    background: rgba($amber, 0.04);
+  }
+
+  .clickable {
+    cursor: pointer;
+  }
+
+  .empty {
+    text-align: center;
+    color: $text-muted;
+    padding: 32px 16px;
+    font-style: italic;
+  }
+
+  .error-col {
+    max-width: 280px;
+    overflow: hidden;
+  }
+  .error-preview {
+    color: #fca5a5;
+    font-size: 12px;
+  }
+}
+
+// ── Detail Row ─────────────────────────────────────────────────────────────
+.detail-row td {
+  background: rgba($red, 0.06) !important;
+  padding: 0 !important;
+  border-bottom: 1px solid rgba($red, 0.2) !important;
+}
+
+.error-detail-box {
+  padding: 16px 20px;
+
+  strong {
+    color: #fca5a5;
+    font-size: 12px;
+  }
+
+  pre {
+    font-family: $font-mono;
+    font-size: 12px;
+    color: $text-dim;
+    white-space: pre-wrap;
+    margin-top: 6px;
+    margin-bottom: 12px;
+    background: $bg;
+    border-radius: 4px;
+    padding: 10px;
+    border: 1px solid $border;
+  }
+}
+
+// ── API Error ──────────────────────────────────────────────────────────────
+.api-error {
+  padding: 12px 20px;
+  background: rgba($red, 0.08);
+  color: #fca5a5;
+  font-size: 13px;
+  border-bottom: 1px solid rgba($red, 0.2);
+}
+
+// ── Buttons ────────────────────────────────────────────────────────────────
+.btn-primary {
+  padding: 8px 18px;
+  background: $accent;
+  border: none;
+  border-radius: 6px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s;
+  &:hover:not(:disabled) {
+    background: $accent-dim;
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.btn-secondary {
+  padding: 7px 16px;
+  background: $surface2;
+  border: 1px solid $border;
+  border-radius: 6px;
+  color: $text;
+  font-size: 13px;
+  cursor: pointer;
+  transition: border-color 0.15s;
+  &:hover:not(:disabled) {
+    border-color: $accent;
+  }
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.btn-refresh {
+  padding: 7px 14px;
+  background: $surface2;
+  border: 1px solid $border;
+  border-radius: 6px;
+  color: $text-dim;
+  font-size: 13px;
+  cursor: pointer;
+  &:hover:not(:disabled) {
+    color: $text;
+    border-color: $accent;
+  }
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
+.btn-sm {
+  padding: 5px 12px;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 6px;
+  color: $text-dim;
+  font-size: 12px;
+  cursor: pointer;
+  &:hover {
+    color: $text;
+    border-color: $accent;
+  }
+}
+
+// ── Status Dot ─────────────────────────────────────────────────────────────
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  &.green,
+  &.success {
+    background: $green;
+  }
+  &.red,
+  &.failure {
+    background: $red;
+  }
+  &.unknown {
+    background: $text-muted;
+  }
+}
+
+// ── Pills ──────────────────────────────────────────────────────────────────
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 500;
+
+  &.green {
+    background: rgba($green, 0.15);
+    color: $green;
+  }
+  &.red {
+    background: rgba($red, 0.15);
+    color: $red;
+  }
+  &.grey {
+    background: rgba($text-muted, 0.15);
+    color: $text-muted;
+  }
+}
+
+// ── Responsive ─────────────────────────────────────────────────────────────
+@media (max-width: 640px) {
+  .monitor-body {
+    padding: 12px;
+    gap: 20px;
+  }
+  .monitor-header {
+    padding: 12px 16px;
+  }
+  .cards {
+    grid-template-columns: 1fr 1fr;
+  }
+  .cards .card {
+    border-right: none;
+    border-bottom: 1px solid $border;
+  }
+  .trigger-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .trigger-date-row {
+    flex-direction: column;
+  }
+}
