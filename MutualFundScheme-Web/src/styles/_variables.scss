@@ -1,0 +1,69 @@
+// ── Brand Colors ──────────────────────────────────────────────────
+$primary:          #1F4E79;
+$primary-light:    #2E75B6;
+$primary-dark:     #143352;
+$primary-hover:    #1a4269;
+$accent:           #16A085;
+$accent-light:     #1abc9c;
+$warning:          #F39C12;
+$warning-light:    #fef9e7;
+$warning-dark:     #d68910;
+$danger:           #E74C3C;
+$danger-light:     #fdf2f1;
+$success:          #27AE60;
+$success-light:    #eafaf1;
+
+// ── Neutrals ──────────────────────────────────────────────────────
+$dark:             #1A1A2E;
+$text-primary:     #2C3E50;
+$text-secondary:   #5D6D7E;
+$text-muted:       #95A5A6;
+$surface:          #FFFFFF;
+$page-bg:          #F0F4F8;
+$border:           #E2E8F0;
+$border-dark:      #CBD5E0;
+$hover-bg:         #F7FAFC;
+
+// ── Sidebar ───────────────────────────────────────────────────────
+$sidebar-bg:       #1F4E79;
+$sidebar-width:    220px;
+$sidebar-collapsed:64px;
+$sidebar-text:     #BDD7EE;
+$sidebar-active:   rgba(255,255,255,0.15);
+$sidebar-hover:    rgba(255,255,255,0.08);
+
+// ── Layout ────────────────────────────────────────────────────────
+$topbar-height:    64px;
+$card-radius:      12px;
+$input-radius:     8px;
+$button-radius:    8px;
+$page-padding:     24px;
+
+// ── Typography ────────────────────────────────────────────────────
+$font-family:      'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+$font-size-xs:     11px;
+$font-size-sm:     12px;
+$font-size-base:   14px;
+$font-size-md:     15px;
+$font-size-lg:     18px;
+$font-size-xl:     20px;
+$font-size-2xl:    24px;
+$font-size-3xl:    28px;
+$font-size-4xl:    32px;
+
+// ── Shadows ───────────────────────────────────────────────────────
+$shadow-sm:   0 1px 3px rgba(0,0,0,0.08);
+$shadow-md:   0 4px 12px rgba(0,0,0,0.10);
+$shadow-lg:   0 8px 24px rgba(0,0,0,0.12);
+$shadow-card: 0 2px 8px  rgba(31,78,121,0.08);
+
+// ── Transitions ───────────────────────────────────────────────────
+$transition-fast:  all 0.15s ease;
+$transition-base:  all 0.25s ease;
+$transition-slow:  all 0.35s ease;
+
+// ── Z-index ───────────────────────────────────────────────────────
+$z-sidebar:  100;
+$z-topbar:   200;
+$z-modal:    300;
+$z-toast:    400;

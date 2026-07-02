@@ -1,0 +1,53 @@
+@use '../styles/variables' as *;
+@use '../styles/mixins' as *;
+
+.standalone-topbar {
+  @include flex-between;
+  height: $topbar-height;
+  padding: 0 24px;
+  background: $primary;
+  box-shadow: $shadow-sm;
+
+  @media (max-width: 576px) {
+    padding: 0 14px;
+    height: 56px;
+  }
+}
+
+.brand {
+  @include flex-start;
+  gap: 8px;
+  color: #fff;
+  font-weight: 700;
+  font-size: $font-size-lg;
+}
+
+.standalone-nav {
+  @include flex-start;
+  gap: 4px;
+
+  a {
+    @include flex-start;
+    gap: 8px;
+    padding: 8px 16px;
+    border-radius: $button-radius;
+    color: $sidebar-text;
+    font-size: $font-size-sm;
+    font-weight: 600;
+    transition: $transition-fast;
+
+    &:hover {
+      background: $sidebar-hover;
+      color: #fff;
+    }
+
+    &.active {
+      background: $sidebar-active;
+      color: #fff;
+    }
+  }
+
+  @media (max-width: 576px) {
+    a span { display: none; }
+  }
+}

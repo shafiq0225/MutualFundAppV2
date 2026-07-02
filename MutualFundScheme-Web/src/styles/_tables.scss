@@ -1,0 +1,72 @@
+@use 'variables' as *;
+@use 'mixins' as *;
+
+.table-container {
+  @include card;
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th {
+    background: $page-bg;
+    padding: 12px 16px;
+    font-size: $font-size-xs;
+    font-weight: 600;
+    color: $text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    text-align: left;
+    border-bottom: 1px solid $border;
+  }
+
+  td {
+    padding: 14px 16px;
+    font-size: $font-size-base;
+    color: $text-primary;
+    border-bottom: 1px solid $border;
+    vertical-align: middle;
+  }
+
+  tr:last-child td { border-bottom: none; }
+
+  tr:hover td { background: $hover-bg; }
+
+  &-striped tr:nth-child(even) td {
+    background: rgba($page-bg, 0.5);
+  }
+}
+
+// ── Status Badges ─────────────────────────────────────────────────
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: $font-size-xs;
+  font-weight: 600;
+  gap: 4px;
+
+  &-success {
+    background: $success-light;
+    color: $success;
+  }
+  &-warning {
+    background: $warning-light;
+    color: $warning-dark;
+  }
+  &-danger {
+    background: $danger-light;
+    color: $danger;
+  }
+  &-primary {
+    background: rgba($primary-light, 0.12);
+    color: $primary-light;
+  }
+  &-muted {
+    background: $hover-bg;
+    color: $text-muted;
+  }
+}

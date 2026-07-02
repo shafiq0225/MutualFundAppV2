@@ -1,0 +1,22 @@
+<!--
+  Temporary top nav for standalone development/testing.
+  Remove this bar once embedded into the parent shell — the parent's
+  sidebar will drive navigation into this app's routes instead.
+-->
+<div class="standalone-topbar">
+  <span class="brand">
+    <i class="fas fa-building-columns"></i> Scheme NAV
+  </span>
+  <nav class="standalone-nav">
+    <a routerLink="/nav" routerLinkActive="active">
+      <i class="fas fa-chart-line"></i> NAV Comparison
+    </a>
+    <a routerLink="/schemes" routerLinkActive="active">
+      <i class="fas fa-list-check"></i> Scheme Enrollment
+    </a>
+  </nav>
+</div>
+
+<div class="page-container">
+  <router-outlet></router-outlet>
+</div>
