@@ -40,8 +40,9 @@ namespace MutualFundNav.Application.UseCases.Commands
         ///   Examples: "NavDownloadWorker.Scheduled", "NavController.ManualTrigger".
         /// </param>
         /// <param name="ct">Cancellation token.</param>
+        /// <param name="allowReprocess">When true, manual triggers can re-publish existing data instead of skipping.</param>
         /// <returns>
-        ///   Success(true)  — downloaded and stored.
+        ///   Success(true)  — downloaded and stored, or existing data re-published.
         ///   Success(false) — already existed, skipped.
         ///   Failure(msg)   — download or storage error.
         /// </returns>
@@ -49,17 +50,37 @@ namespace MutualFundNav.Application.UseCases.Commands
             DateTime targetDate,
             string kafkaTopic = "nav-file-processed",
             CancellationToken ct = default,
-            string triggerSource = "Unknown")
+            string triggerSource = "Unknown",
+            bool allowReprocess = false)
         {
             _logger.LogInformation("Checking if NAV data exists for {Date}",
                 targetDate.ToString("yyyy-MM-dd"));
 
+            var existingNavFile = await _unitOfWork.NavFiles.GetByDateAsync(targetDate);
+
             // ── Idempotency check ──────────────────────────────────────────
-            if (await _unitOfWork.NavFiles.ExistsByDateAsync(targetDate))
+            if (existingNavFile is not null)
             {
-                _logger.LogInformation("NAV data already exists for {Date} — skipping",
+                if (!allowReprocess)
+                {
+                    _logger.LogInformation("NAV data already exists for {Date} — skipping",
+                        targetDate.ToString("yyyy-MM-dd"));
+                    return Result<bool>.Success(false);
+                }
+
+                _logger.LogInformation("NAV data already exists for {Date} — re-publishing stored content",
                     targetDate.ToString("yyyy-MM-dd"));
-                return Result<bool>.Success(false);
+
+                await PublishNavFileAsync(
+                    targetDate,
+                    existingNavFile.FileContent,
+                    existingNavFile.RecordCount,
+                    existingNavFile.Checksum,
+                    kafkaTopic,
+                    ct,
+                    triggerSource);
+
+                return Result<bool>.Success(true);
             }
 
             // ── Download ───────────────────────────────────────────────────
@@ -107,6 +128,27 @@ namespace MutualFundNav.Application.UseCases.Commands
                 return Result<bool>.Failure($"Storage failed: {ex.Message}");
             }
 
+            await PublishNavFileAsync(
+                targetDate,
+                content,
+                recordCount,
+                checksum,
+                kafkaTopic,
+                ct,
+                triggerSource);
+
+            return Result<bool>.Success(true);
+        }
+
+        private async Task PublishNavFileAsync(
+            DateTime targetDate,
+            string content,
+            int recordCount,
+            string checksum,
+            string kafkaTopic,
+            CancellationToken ct,
+            string triggerSource)
+        {
             // ── Publish to Kafka ───────────────────────────────────────────
             // PublishAsync never throws — failures come back in the result.
             var messageKey = targetDate.ToString("yyyy-MM-dd");
@@ -127,7 +169,7 @@ namespace MutualFundNav.Application.UseCases.Commands
             if (!publishResult.IsSuccess)
             {
                 _logger.LogWarning(
-                    "NAV saved but Kafka publish failed for {Date}: {Error}",
+                    "Kafka publish failed for {Date}: {Error}",
                     targetDate.ToString("yyyy-MM-dd"), publishResult.ErrorMessage);
             }
 
@@ -161,8 +203,6 @@ namespace MutualFundNav.Application.UseCases.Commands
                 _logger.LogError(logEx, "Failed to persist KafkaPublishLog for {Date}",
                     targetDate.ToString("yyyy-MM-dd"));
             }
-
-            return Result<bool>.Success(true);
         }
 
         private static string ComputeChecksum(string content)

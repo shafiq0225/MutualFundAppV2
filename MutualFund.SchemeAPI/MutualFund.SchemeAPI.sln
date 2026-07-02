@@ -1,0 +1,43 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MutualFund.Scheme.Domain", "MutualFund.Scheme.Domain\MutualFund.Scheme.Domain.csproj", "{27A6CC01-D3D2-469B-8ABA-F9D2451C9417}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MutualFund.Scheme.Application", "MutualFund.Scheme.Application\MutualFund.Scheme.Application.csproj", "{3859D1DE-F1F5-4582-815B-70ED5CDA1BE6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MutualFund.Scheme.Infrastructure", "MutualFund.Scheme.Infrastructure\MutualFund.Scheme.Infrastructure.csproj", "{8D17CD9B-F663-4412-B05E-FC5B0AEC61C6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MutualFund.Scheme.API", "MutualFund.Scheme.API\MutualFund.Scheme.API.csproj", "{6431B9C6-4044-48BE-BD03-C69D20DD3C23}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{27A6CC01-D3D2-469B-8ABA-F9D2451C9417}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{27A6CC01-D3D2-469B-8ABA-F9D2451C9417}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{27A6CC01-D3D2-469B-8ABA-F9D2451C9417}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{27A6CC01-D3D2-469B-8ABA-F9D2451C9417}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3859D1DE-F1F5-4582-815B-70ED5CDA1BE6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3859D1DE-F1F5-4582-815B-70ED5CDA1BE6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3859D1DE-F1F5-4582-815B-70ED5CDA1BE6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3859D1DE-F1F5-4582-815B-70ED5CDA1BE6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8D17CD9B-F663-4412-B05E-FC5B0AEC61C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8D17CD9B-F663-4412-B05E-FC5B0AEC61C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8D17CD9B-F663-4412-B05E-FC5B0AEC61C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8D17CD9B-F663-4412-B05E-FC5B0AEC61C6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6431B9C6-4044-48BE-BD03-C69D20DD3C23}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6431B9C6-4044-48BE-BD03-C69D20DD3C23}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6431B9C6-4044-48BE-BD03-C69D20DD3C23}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6431B9C6-4044-48BE-BD03-C69D20DD3C23}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {2D17AF5D-6F37-42C1-A460-51FDF44877DF}
+	EndGlobalSection
+EndGlobal

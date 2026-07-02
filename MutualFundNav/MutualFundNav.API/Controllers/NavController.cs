@@ -77,7 +77,12 @@ namespace MutualFundNav.API.Controllers
                     : BadRequest(new { error = upsertResult.ErrorMessage });
             }
 
-            var result = await _command.ExecuteAsync(targetDate, NavTopic, ct: ct, triggerSource: "NavController.ManualTrigger");
+            var result = await _command.ExecuteAsync(
+                targetDate,
+                NavTopic,
+                ct: ct,
+                triggerSource: "NavController.ManualTrigger",
+                allowReprocess: true);
 
             stopwatch.Stop();
             await PersistJobLogAsync(
@@ -130,7 +135,12 @@ namespace MutualFundNav.API.Controllers
                     : BadRequest(new { error = upsertResult.ErrorMessage });
             }
 
-            var result = await _command.ExecuteAsync(date, NavTopic, ct: ct, triggerSource: "NavController.ManualTriggerForDate");
+            var result = await _command.ExecuteAsync(
+                date,
+                NavTopic,
+                ct: ct,
+                triggerSource: "NavController.ManualTriggerForDate",
+                allowReprocess: true);
 
             stopwatch.Stop();
             await PersistJobLogAsync(
