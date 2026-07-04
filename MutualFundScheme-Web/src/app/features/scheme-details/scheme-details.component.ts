@@ -1,11 +1,12 @@
 import {
-  Component, OnInit, ChangeDetectorRef,
+  Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef,
   ElementRef, ViewChild, ViewChildren,
-  QueryList, AfterViewInit
+  QueryList, AfterViewInit, OnDestroy
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ToastrService } from 'ngx-toastr';
+import { Chart, registerables } from 'chart.js';
 
 import { SchemeDetailsService } from '../../core/services/scheme-details.service';
 import { SchemeDetailsDto, PeriodReturnDto } from '../../core/models/scheme-details.model';
@@ -23,8 +24,10 @@ export interface PeriodCard {
   imports: [CommonModule, LoadingSpinnerComponent],
   templateUrl: './scheme-details.component.html',
   styleUrls: ['./scheme-details.component.scss']
+  ,
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class SchemeDetailsComponent implements OnInit, AfterViewInit {
+export class SchemeDetailsComponent implements OnInit, AfterViewInit, OnDestroy {
   scheme: SchemeDetailsDto | null = null;
   loading = true;
   schemeCode = '';
@@ -34,6 +37,8 @@ export class SchemeDetailsComponent implements OnInit, AfterViewInit {
 
   @ViewChildren('periodCanvas')
   periodCanvases!: QueryList<ElementRef<HTMLCanvasElement>>;
+
+  sparklineChart?: Chart<'line', number[], string>;
 
   constructor(
     private route: ActivatedRoute,
@@ -47,6 +52,15 @@ export class SchemeDetailsComponent implements OnInit, AfterViewInit {
     this.schemeCode =
       this.route.snapshot.paramMap.get('schemeCode') || '';
     this.loadDetails();
+  }
+
+  ngOnDestroy(): void {
+    this.sparklineChart?.destroy();
+  }
+
+  // trackBy for period cards to avoid unnecessary re-renders
+  trackByCard(_index: number, item: PeriodCard): string {
+    return item.label;
   }
 
   ngAfterViewInit(): void {
@@ -84,6 +98,10 @@ export class SchemeDetailsComponent implements OnInit, AfterViewInit {
     ];
   }
 
+  get hasPeriodReturns(): boolean {
+    return this.periodCards.some(card => card.period?.hasData === true);
+  }
+
   // ── Draw all charts ──────────────────────────────────────────────
   drawAllCharts(): void {
     this.drawSparkline();
@@ -93,8 +111,62 @@ export class SchemeDetailsComponent implements OnInit, AfterViewInit {
   drawSparkline(): void {
     const canvas = this.canvasRef?.nativeElement;
     if (!canvas || !this.scheme?.navHistory?.length) return;
-    const navs = this.scheme.navHistory.map(d => d.nav);
-    this.drawChart(canvas, navs, this.scheme.isDailyUp, 80);
+    this.sparklineChart?.destroy();
+
+    Chart.register(...registerables);
+
+    const labels = this.scheme.navHistory.map(point => point.dateText);
+    const data = this.scheme.navHistory.map(point => point.nav);
+
+    this.sparklineChart = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'NAV',
+          data,
+          borderColor: this.scheme.isDailyUp ? '#22c55e' : '#ef4444',
+          backgroundColor: this.scheme.isDailyUp ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+          fill: true,
+          tension: 0.25,
+          pointRadius: 0,
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            enabled: true,
+            mode: 'index',
+            intersect: false,
+            callbacks: {
+              label: (context) => `NAV: ₹${context.parsed.y}`
+            }
+          }
+        },
+        interaction: {
+          mode: 'index',
+          intersect: false
+        },
+        scales: {
+          x: {
+            display: true,
+            title: { display: true, text: 'Date' },
+            ticks: { autoSkip: true, maxTicksLimit: 6 }
+          },
+          y: {
+            display: true,
+            title: { display: true, text: 'NAV' },
+            ticks: {
+              callback: function(value: any) { return `₹${value}`; }
+            }
+          }
+        }
+      }
+    });
   }
 
   drawPeriodSparklines(): void {
@@ -175,6 +247,28 @@ export class SchemeDetailsComponent implements OnInit, AfterViewInit {
     ctx.lineWidth = 1.5;
     ctx.lineJoin = 'round';
     ctx.stroke();
+
+  }
+
+  copySchemeCode(): void {
+    const code = this.scheme?.schemeCode || this.schemeCode || '';
+    if (!code) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(() => {
+        this.toastr.success('Scheme code copied to clipboard');
+      }, () => {
+        this.toastr.success('Copied');
+      });
+    } else {
+      // fallback
+      const el = document.createElement('textarea');
+      el.value = code;
+      el.style.position = 'fixed'; el.style.left = '-9999px';
+      document.body.appendChild(el);
+      el.select();
+      try { document.execCommand('copy'); this.toastr.success('Scheme code copied'); } catch { }
+      document.body.removeChild(el);
+    }
   }
 
   goBack(): void {

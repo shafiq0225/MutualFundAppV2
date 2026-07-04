@@ -4,15 +4,23 @@
 .scheme-details {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
+  width: 100%;
+  max-width: none;
+  margin: 0 auto;
+  padding: 0 clamp(12px, 2vw, 24px) 24px;
+  box-sizing: border-box;
 }
 
-// ── Back Header ───────────────────────────────────────────────────
 .back-header {
   @include flex-start;
-  gap: 14px;
-  align-items: flex-start;
-  margin-bottom: 4px;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: $card-radius;
+  box-shadow: $shadow-card;
 }
 
 .back-btn {
@@ -37,12 +45,14 @@
 
 .back-info {
   flex: 1;
+  min-width: 0;
 
   h2 {
     font-size: $font-size-xl;
     color: $text-primary;
     margin: 0 0 4px;
     line-height: 1.3;
+    overflow-wrap: anywhere;
   }
 }
 
@@ -63,62 +73,82 @@
   border-radius: 4px;
 }
 
-// ── NAV Hero ──────────────────────────────────────────────────────
+.top-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 18px;
+  align-items: stretch;
+}
+
+.top-grid > * {
+  min-width: 0;
+}
+
 .nav-hero {
   border-radius: $card-radius;
-  padding: 22px 22px 18px;
+  padding: 14px 16px;
   border: 1px solid transparent;
+  width: 100%;
+  min-height: auto;
+  box-shadow: $shadow-card;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+  gap: 12px;
 
   &--up {
-    background: linear-gradient(
-      135deg,
-      rgba($primary-dark, 0.9),
-      rgba(10, 30, 70, 0.95)
-    );
+    background: linear-gradient(135deg, rgba($primary-dark, 0.9), rgba(10, 30, 70, 0.95));
     border-color: rgba($primary, 0.2);
   }
+
   &--down {
-    background: linear-gradient(
-      135deg,
-      rgba(40, 15, 15, 0.95),
-      rgba(60, 20, 20, 0.9)
-    );
+    background: linear-gradient(135deg, rgba(40, 15, 15, 0.95), rgba(60, 20, 20, 0.9));
     border-color: rgba($danger, 0.2);
   }
 }
 
+.nav-hero__main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, auto);
+  column-gap: 16px;
+  align-items: center;
+  min-width: 0;
+}
+
 .nav-hero__label {
+  grid-column: 1;
   font-size: 10px;
   font-weight: 600;
-  color: rgba(255, 255, 255, 0.55);
+  color: rgba(255, 255, 255, 0.65);
   text-transform: uppercase;
   letter-spacing: 0.1em;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .nav-hero__value {
-  font-size: 36px;
+  grid-column: 1;
+  font-size: clamp(28px, 3vw, 36px);
   font-weight: 700;
   color: #fff;
   font-family: "Courier New", monospace;
-  letter-spacing: -1px;
-  line-height: 1;
+  letter-spacing: 0;
+  line-height: 1.1;
   margin-bottom: 8px;
 }
 
 .nav-hero__change {
+  grid-column: 1;
   @include flex-start;
-  gap: 12px;
+  gap: 10px;
   flex-wrap: wrap;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .change-pill {
   @include flex-start;
   gap: 6px;
-  padding: 5px 12px;
-  border-radius: 20px;
-  font-size: 13px;
+  padding: 4px 10px;
+  border-radius: 18px;
+  font-size: 12px;
   font-weight: 600;
   font-family: "Courier New", monospace;
 
@@ -126,6 +156,7 @@
     background: rgba($success, 0.15);
     color: $success;
   }
+
   &--down {
     background: rgba($danger, 0.15);
     color: $danger;
@@ -133,94 +164,74 @@
 }
 
 .nav-hero__date {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.45);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
 }
 
-// Compare strip
 .nav-compare {
-  display: grid;
-  grid-template-columns: 1fr 1px 1fr;
-  padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  margin-top: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  gap: 12px;
+  align-self: start;
+  padding-left: 14px;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  margin-top: 0;
 }
 
 .nav-compare__divider {
-  background: rgba(255, 255, 255, 0.08);
+  display: none;
 }
 
 .nav-compare__item {
   display: flex;
+  flex: 1 1 132px;
+  min-width: 0;
   flex-direction: column;
-  gap: 3px;
-  padding: 0 12px;
-
-  &:first-child {
-    padding-left: 0;
-  }
-  &:last-child {
-    padding-right: 0;
-    padding-left: 20px;
-  }
+  gap: 2px;
 }
 
 .nc-label {
   font-size: 10px;
-  color: rgba(255, 255, 255, 0.4);
+  color: rgba(255, 255, 255, 0.65);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.05em;
 }
 
 .nc-value {
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: #fff;
 }
 
 .nc-date {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.35);
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.55);
 }
 
-// ── Sparkline ─────────────────────────────────────────────────────
-.sparkline-card {
-  @include card;
-  padding: 12px 16px 10px;
-}
-
-.sparkline-canvas {
-  width: 100%;
-  height: 80px;
-  display: block;
-}
-
-.sparkline-labels {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 6px;
-}
-
-// ── Week Card ─────────────────────────────────────────────────────
 .week-card {
   border-radius: $card-radius;
-  padding: 16px 20px;
+  padding: 16px 18px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  flex-wrap: wrap;
   position: relative;
   overflow: hidden;
+  width: 100%;
+  min-height: auto;
+  align-self: stretch;
+}
 
-  &--up {
-    background: rgba($success, 0.06);
-    border: 1px solid rgba($success, 0.25);
-  }
-  &--down {
-    background: rgba($danger, 0.06);
-    border: 1px solid rgba($danger, 0.25);
-  }
+.week-card--up {
+  background: rgba($success, 0.08);
+  border: 1px solid rgba($success, 0.25);
+}
+
+.week-card--down {
+  background: rgba($danger, 0.08);
+  border: 1px solid rgba($danger, 0.25);
 }
 
 .week-card__accent {
@@ -233,51 +244,88 @@
   .week-card--up & {
     background: $success;
   }
+
   .week-card--down & {
     background: $danger;
   }
 }
 
 .week-card__left {
+  flex: 1;
+  min-width: 0;
   padding-left: 8px;
 }
 
 .week-card__label {
-  font-size: 13px;
-  font-weight: 600;
-  color: $text-primary;
-  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: $page-bg;
+  margin-bottom: 3px;
 }
 
 .week-card__sub {
-  font-size: 11px;
+  font-size: 12px;
   color: $text-muted;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .week-card__right {
-  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 120px;
 }
 
 .week-pct {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 700;
   font-family: "Courier New", monospace;
   line-height: 1;
-  margin-bottom: 4px;
 }
 
 .week-pts {
-  font-size: 11px;
+  font-size: 12px;
   font-family: "Courier New", monospace;
   @include flex-start;
   gap: 4px;
   justify-content: flex-end;
 }
 
-// ── Section Header ────────────────────────────────────────────────
+.sparkline-card {
+  @include card;
+  padding: 16px 18px 12px;
+  width: 100%;
+}
+
+.sparkline-chart-wrapper {
+  position: relative;
+  width: 100%;
+  height: clamp(180px, 24vw, 260px);
+  overflow: hidden;
+  border-radius: 10px;
+}
+
+.sparkline-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.sparkline-labels {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+}
+
 .section-header {
   @include flex-between;
   align-items: center;
+  gap: 12px;
+  padding-top: 2px;
 
   h3 {
     font-size: $font-size-lg;
@@ -297,42 +345,23 @@
   border: 1px solid rgba($success, 0.2);
 }
 
-// ── Period Returns Grid ───────────────────────────────────────────
 .period-grid {
   display: grid;
-  gap: 10px;
-
-  // Desktop: all 5 in a row
-  grid-template-columns: repeat(5, 1fr);
-
-  // Tablet
-  @media (max-width: 900px) {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  // FIX: On small mobile (< 480px) 2 columns make each card too narrow
-  // for the canvas to receive a non-zero offsetWidth.
-  // Switch to a single column so each card is full-width and the
-  // canvas has room to paint before drawChart() is called.
-  @media (max-width: 480px) {
-    grid-template-columns: 1fr 1fr; // 2-col is fine at ≥320px card width
-  }
-
-  @media (max-width: 360px) {
-    grid-template-columns: 1fr; // single column on very small phones
-  }
+  gap: 12px;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .period-card {
   background: $surface;
   border: 1px solid $border;
   border-radius: $card-radius;
-  padding: 14px 14px 0; // zero bottom — chart sits flush
+  padding: 14px 14px 0;
   display: flex;
   flex-direction: column;
   gap: 3px;
   overflow: hidden;
   transition: $transition-fast;
+  min-width: 0;
 
   &:hover {
     border-color: $border-dark;
@@ -342,9 +371,11 @@
   &--up {
     border-top: 2.5px solid $success;
   }
+
   &--down {
     border-top: 2.5px solid $danger;
   }
+
   &--empty {
     opacity: 0.45;
     padding-bottom: 14px;
@@ -359,10 +390,11 @@
 }
 
 .pc-nav {
-  font-size: 16px;
+  font-size: clamp(14px, 1.4vw, 16px);
   font-weight: 700;
   color: $text-primary;
   line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .pc-pts {
@@ -388,20 +420,21 @@
   &--up {
     color: $success;
   }
+
   &--down {
     color: $danger;
   }
 }
 
-// Chart area — bleeds to card edges at bottom
 .pc-chart {
-  margin: 0 -14px; // bleed to card left/right padding
+  margin: 0 -14px;
   height: 52px;
   flex-shrink: 0;
 
   &--up {
     background: rgba($success, 0.06);
   }
+
   &--down {
     background: rgba($danger, 0.06);
   }
@@ -413,81 +446,26 @@
   display: block;
 }
 
-// ── Info Strip ────────────────────────────────────────────────────
-.info-strip {
-  @include card;
-  display: grid;
-  grid-template-columns: 1fr 1px 1fr 1px 1fr;
-  padding: 14px 20px;
-
-  @media (max-width: 480px) {
-    grid-template-columns: 1fr;
-    gap: 12px;
-
-    .info-strip__divider {
-      display: none;
-    }
-  }
-}
-
-.info-strip__divider {
-  background: $border;
-}
-
-.info-strip__item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 0 16px;
-
-  &:first-child {
-    padding-left: 0;
-  }
-  &:last-child {
-    padding-right: 0;
-  }
-}
-
-.info-label {
-  font-size: 10px;
-  font-weight: 600;
-  color: $text-muted;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.info-value {
-  font-size: $font-size-sm;
-  color: $text-primary;
-  font-weight: 500;
-}
-
-.info-code {
-  font-family: "Courier New", monospace;
-  font-size: 13px;
-  color: $primary-light;
-  background: rgba($primary, 0.06);
-  padding: 2px 8px;
-  border-radius: 4px;
-  width: fit-content;
-}
-
-// ── Utilities ─────────────────────────────────────────────────────
 .font-mono {
   font-family: "Courier New", monospace;
 }
+
 .text-xs {
   font-size: $font-size-xs;
 }
+
 .text-muted {
   color: $text-muted;
 }
+
 .text-success {
   color: $success;
 }
+
 .text-danger {
   color: $danger;
 }
+
 .mt-16 {
   margin-top: 16px;
 }
@@ -502,15 +480,158 @@
     margin-bottom: 16px;
     display: block;
   }
+
   h3 {
     color: $text-secondary;
     margin-bottom: 8px;
   }
+
   p {
     color: $text-muted;
     font-size: $font-size-sm;
   }
+
   code {
     color: $primary-light;
+  }
+}
+
+.skeleton-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 clamp(12px, 2vw, 24px);
+  box-sizing: border-box;
+}
+
+.skeleton-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.02),
+    rgba(255, 255, 255, 0.04),
+    rgba(255, 255, 255, 0.02)
+  );
+  border-radius: 8px;
+  min-height: 12px;
+  animation: shimmer 1.2s linear infinite;
+}
+
+.skeleton.h-lg {
+  height: 72px;
+}
+
+.skeleton.h-md {
+  height: 28px;
+}
+
+.skeleton.h-sm {
+  height: 16px;
+  width: 80px;
+}
+
+@media (max-width: 980px) {
+  .top-grid,
+  .nav-hero,
+  .nav-hero__main {
+    grid-template-columns: 1fr;
+  }
+
+  .nav-compare {
+    grid-column: 1;
+    grid-row: auto;
+    flex-wrap: wrap;
+    padding-top: 12px;
+    padding-left: 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-left: 0;
+    margin-top: 2px;
+  }
+
+  .nav-hero,
+  .week-card {
+    min-height: auto;
+  }
+
+  .period-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .scheme-details {
+    gap: 14px;
+  }
+
+  .back-header {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .back-info h2 {
+    font-size: $font-size-lg;
+  }
+
+  .nav-hero {
+    padding: 16px;
+  }
+
+  .nav-hero__value {
+    font-size: 30px;
+  }
+
+  .week-card {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 16px 18px;
+  }
+
+  .week-card__sub {
+    white-space: normal;
+  }
+
+  .week-card__right {
+    align-items: flex-start;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .week-pts {
+    justify-content: flex-start;
+  }
+
+  .sparkline-card {
+    padding: 14px 14px 10px;
+  }
+
+  .sparkline-chart-wrapper {
+    height: 180px;
+  }
+
+  .period-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 360px) {
+  .period-grid {
+    grid-template-columns: 1fr;
+  }
+}
+@keyframes shimmer {
+  0% {
+    background-position: -200px 0;
+  }
+
+  100% {
+    background-position: 200px 0;
   }
 }
