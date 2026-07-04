@@ -6,7 +6,6 @@
   flex-direction: column;
   gap: 18px;
   width: 100%;
-  max-width: none;
   margin: 0 auto;
   padding: 0 clamp(12px, 2vw, 24px) 24px;
   box-sizing: border-box;
@@ -92,8 +91,8 @@
   min-height: auto;
   box-shadow: $shadow-card;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
-  gap: 12px;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+  gap: 14px;
 
   &--up {
     background: linear-gradient(135deg, rgba($primary-dark, 0.9), rgba(10, 30, 70, 0.95));
@@ -108,7 +107,7 @@
 
 .nav-hero__main {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, auto);
+  grid-template-columns: minmax(0, 1fr) minmax(220px, 1fr);
   column-gap: 16px;
   align-items: center;
   min-width: 0;
@@ -175,7 +174,7 @@
   grid-row: 1 / span 3;
   gap: 12px;
   align-self: start;
-  padding-left: 14px;
+  padding-left: 12px;
   border-left: 1px solid rgba(255, 255, 255, 0.08);
   margin-top: 0;
 }
@@ -348,7 +347,7 @@
 .period-grid {
   display: grid;
   gap: 12px;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
 
 .period-card {
