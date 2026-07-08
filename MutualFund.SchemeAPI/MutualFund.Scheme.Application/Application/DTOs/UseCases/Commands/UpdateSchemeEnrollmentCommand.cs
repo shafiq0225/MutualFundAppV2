@@ -28,6 +28,7 @@ namespace MutualFund.Scheme.Application.UseCases.Commands
                 throw new NotFoundException("SchemeEnrollment", schemeCode);
 
             existing.SchemeName = dto.SchemeName.Trim();
+            existing.FundName = dto.FundName.Trim();
             existing.IsApproved = dto.IsApproved;
             existing.UpdatedAt = DateTime.UtcNow;
 
@@ -45,6 +46,7 @@ namespace MutualFund.Scheme.Application.UseCases.Commands
             Id = e.Id,
             SchemeCode = e.SchemeCode,
             SchemeName = e.SchemeName,
+            FundName = e.FundName,
             IsApproved = e.IsApproved,
             CreatedAt = e.CreatedAt,
             UpdatedAt = e.UpdatedAt

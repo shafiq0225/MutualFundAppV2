@@ -46,6 +46,7 @@ namespace MutualFund.Scheme.Application.UseCases.Queries
             Id = e.Id,
             SchemeCode = e.SchemeCode,
             SchemeName = e.SchemeName,
+            FundName = e.FundName,
             IsApproved = e.IsApproved,
             CreatedAt = e.CreatedAt,
             UpdatedAt = e.UpdatedAt

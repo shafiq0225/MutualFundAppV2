@@ -27,6 +27,7 @@ namespace MutualFund.Scheme.Application.UseCases.Commands
             {
                 SchemeCode = dto.SchemeCode.Trim(),
                 SchemeName = dto.SchemeName.Trim(),
+                FundName = dto.FundName.Trim(),
                 IsApproved = dto.IsApproved,
                 CreatedAt = DateTime.UtcNow
             };
@@ -46,6 +47,7 @@ namespace MutualFund.Scheme.Application.UseCases.Commands
             Id = e.Id,
             SchemeCode = e.SchemeCode,
             SchemeName = e.SchemeName,
+            FundName = e.FundName,
             IsApproved = e.IsApproved,
             CreatedAt = e.CreatedAt,
             UpdatedAt = e.UpdatedAt

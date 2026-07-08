@@ -22,6 +22,10 @@ namespace MutualFund.Scheme.Infrastructure.Data
                 entity.HasIndex(e => e.SchemeCode).IsUnique();
                 entity.Property(e => e.SchemeCode).IsRequired().HasMaxLength(20);
                 entity.Property(e => e.SchemeName).IsRequired().HasMaxLength(500);
+                entity.Property(e => e.FundName).IsRequired().HasMaxLength(500)
+                      .HasDefaultValue(string.Empty);
+                // ↑ Default lets the migration succeed against any existing
+                // enrollment rows — backfill real FundName values afterward.
                 entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETUTCDATE()");
             });
 
