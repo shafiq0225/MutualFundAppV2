@@ -57,6 +57,16 @@ input.date-filter {
 }
 .date-range-clear:hover { color: #F3EEDF; }
 
+.snapshot-btn {
+  appearance: none; -webkit-appearance: none;
+  background: rgba(192, 138, 46, 0.16); border: 1px solid var(--gold);
+  color: #F0DDB4; font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; font-weight: 600;
+  padding: 8px 16px; border-radius: 20px; cursor: pointer; white-space: nowrap;
+  transition: background .15s ease;
+}
+.snapshot-btn:hover:not(:disabled) { background: rgba(192, 138, 46, 0.28); }
+.snapshot-btn:disabled { opacity: .6; cursor: default; }
+
 .cover-grid { display: grid; gap: 26px; }
 .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px 28px; margin-bottom: 28px; }
 .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: #AEB8D2; margin-bottom: 4px; }

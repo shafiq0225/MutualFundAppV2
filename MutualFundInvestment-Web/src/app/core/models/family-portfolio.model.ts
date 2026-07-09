@@ -1,11 +1,12 @@
 export interface QuickReturnDto {
   label: string;
   returnPercent: number;
-  returnAmount: number;
+  periodGainAmount: number;
+  cagrPercent?: number;
   isPositive: boolean;
   hasData: boolean;
   isPartialPeriod?: boolean;
-  cagr?: number | null;
+  actualFromDate?: string;
 }
 
 export interface MemberSummaryDto {
