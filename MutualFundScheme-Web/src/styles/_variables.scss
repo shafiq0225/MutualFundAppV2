@@ -1,46 +1,55 @@
-// ── Brand Colors ──────────────────────────────────────────────────
-$primary:          #1F4E79;
-$primary-light:    #2E75B6;
-$primary-dark:     #143352;
-$primary-hover:    #1a4269;
-$accent:           #16A085;
-$accent-light:     #1abc9c;
-$warning:          #F39C12;
-$warning-light:    #fef9e7;
-$warning-dark:     #d68910;
-$danger:           #E74C3C;
-$danger-light:     #fdf2f1;
-$success:          #27AE60;
-$success-light:    #eafaf1;
+// ── Brand Colors (Passbook ledger theme) ──────────────────────────
+// Aligned with MutualFundInvestment-Web Order/Investor pages.
+$primary:          #1B2A4A; // ink
+$primary-light:    #5C6EA8; // steel
+$primary-dark:     #142138;
+$primary-hover:    #243A63;
+$accent:           #2F6F62; // gain
+$accent-light:     #3E8878;
+$warning:          #C08A2E; // gold
+$warning-light:    #F6ECD8; // gold-soft
+$warning-dark:     #8A6D2F;
+$danger:           #9C3B26; // loss
+$danger-light:     #F3E4DE; // loss-soft
+$success:          #2F6F62; // gain
+$success-light:    #E4EFEA; // gain-soft
+
+// ── Passbook accents ──────────────────────────────────────────────
+$gold:             #C08A2E;
+$gold-soft:        #F6ECD8;
+$steel:            #5C6EA8;
+$steel-soft:       #E7EAF4;
 
 // ── Neutrals ──────────────────────────────────────────────────────
-$dark:             #1A1A2E;
-$text-primary:     #2C3E50;
-$text-secondary:   #5D6D7E;
-$text-muted:       #95A5A6;
-$surface:          #FFFFFF;
-$page-bg:          #F0F4F8;
-$border:           #E2E8F0;
-$border-dark:      #CBD5E0;
-$hover-bg:         #F7FAFC;
+$dark:             #1B2A4A;
+$text-primary:     #1B2A4A; // ink
+$text-secondary:   #324268; // ink-soft
+$text-muted:       #6B6455;
+$surface:          #FFFFFF; // paper
+$page-bg:          #FAF6EC; // parchment
+$border:           #DCD3C1; // line
+$border-dark:      #C9BCA0;
+$hover-bg:         #FCFAF3;
 
-// ── Sidebar ───────────────────────────────────────────────────────
-$sidebar-bg:       #1F4E79;
+// ── Sidebar / top bar ─────────────────────────────────────────────
+$sidebar-bg:       #1B2A4A;
 $sidebar-width:    220px;
 $sidebar-collapsed:64px;
-$sidebar-text:     #BDD7EE;
-$sidebar-active:   rgba(255,255,255,0.15);
-$sidebar-hover:    rgba(255,255,255,0.08);
+$sidebar-text:     #B9C3DD;
+$sidebar-active:   #C08A2E;
+$sidebar-hover:    rgba(255,255,255,0.10);
 
 // ── Layout ────────────────────────────────────────────────────────
-$topbar-height:    64px;
-$card-radius:      12px;
-$input-radius:     8px;
-$button-radius:    8px;
+$topbar-height:    60px;
+$card-radius:      8px;
+$input-radius:     6px;
+$button-radius:    24px;
 $page-padding:     24px;
 
 // ── Typography ────────────────────────────────────────────────────
-$font-family:      'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+$font-family:      'IBM Plex Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+$font-display:     'Fraunces', Georgia, serif;
+$font-mono:        'IBM Plex Mono', 'Courier New', monospace;
 $font-size-xs:     11px;
 $font-size-sm:     12px;
 $font-size-base:   14px;
@@ -52,10 +61,10 @@ $font-size-3xl:    28px;
 $font-size-4xl:    32px;
 
 // ── Shadows ───────────────────────────────────────────────────────
-$shadow-sm:   0 1px 3px rgba(0,0,0,0.08);
-$shadow-md:   0 4px 12px rgba(0,0,0,0.10);
-$shadow-lg:   0 8px 24px rgba(0,0,0,0.12);
-$shadow-card: 0 2px 8px  rgba(31,78,121,0.08);
+$shadow-sm:   0 1px 3px rgba(27,42,74,0.08);
+$shadow-md:   0 4px 14px rgba(27,42,74,0.10);
+$shadow-lg:   0 12px 40px rgba(27,42,74,0.20);
+$shadow-card: 0 2px 8px  rgba(27,42,74,0.06);
 
 // ── Transitions ───────────────────────────────────────────────────
 $transition-fast:  all 0.15s ease;

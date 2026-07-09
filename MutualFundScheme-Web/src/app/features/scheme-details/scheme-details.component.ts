@@ -125,8 +125,8 @@ export class SchemeDetailsComponent implements OnInit, AfterViewInit, OnDestroy 
         datasets: [{
           label: 'NAV',
           data,
-          borderColor: this.scheme.isDailyUp ? '#22c55e' : '#ef4444',
-          backgroundColor: this.scheme.isDailyUp ? 'rgba(34,197,94,0.15)' : 'rgba(239,68,68,0.15)',
+          borderColor: this.scheme.isDailyUp ? '#2F6F62' : '#9C3B26',
+          backgroundColor: this.scheme.isDailyUp ? 'rgba(47,111,98,0.15)' : 'rgba(156,59,38,0.15)',
           fill: true,
           tension: 0.25,
           pointRadius: 0,
@@ -222,11 +222,11 @@ export class SchemeDetailsComponent implements OnInit, AfterViewInit, OnDestroy 
       y: pad.t + cH - ((n - min) / range) * cH
     }));
 
-    const color = isUp ? '#22c55e' : '#ef4444';
+    const color = isUp ? '#2F6F62' : '#9C3B26';
     const grad = ctx.createLinearGradient(0, 0, 0, H);
     grad.addColorStop(0, isUp
-      ? 'rgba(34,197,94,0.22)'
-      : 'rgba(239,68,68,0.22)');
+      ? 'rgba(47,111,98,0.22)'
+      : 'rgba(156,59,38,0.22)');
     grad.addColorStop(1, 'rgba(0,0,0,0)');
 
     // Fill

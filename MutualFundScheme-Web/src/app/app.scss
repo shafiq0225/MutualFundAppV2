@@ -18,7 +18,8 @@
   @include flex-start;
   gap: 8px;
   color: #fff;
-  font-weight: 700;
+  font-family: $font-display;
+  font-weight: 600;
   font-size: $font-size-lg;
 }
 
@@ -43,7 +44,7 @@
 
     &.active {
       background: $sidebar-active;
-      color: #fff;
+      color: $primary;
     }
   }
 

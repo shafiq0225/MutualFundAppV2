@@ -1,21 +1,31 @@
 @use "../../../styles/variables" as *;
 @use "../../../styles/mixins" as *;
 
-// ── Page Header ───────────────────────────────────────────────────
+// ── Page Header (cover styling comes from global .page-header) ─────
 .page-header {
   @include flex-between;
-  margin-bottom: 24px;
   align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
 
   h2 {
-    font-size: $font-size-xl;
-    color: $primary;
-    margin-bottom: 4px;
+    font-family: $font-display;
+    font-size: $font-size-2xl;
+    color: #F3EEDF;
+    margin-bottom: 6px;
   }
   p {
     font-size: $font-size-sm;
-    color: $text-muted;
+    color: #B9C3DD;
     margin: 0;
+  }
+
+  // Enroll button sits on the dark cover — use the gold outline treatment.
+  .btn-primary {
+    background: transparent;
+    color: #F3EEDF;
+    border: 1.5px solid $gold;
+    &:hover:not(:disabled) { background: rgba($gold, 0.16); }
   }
 }
 
@@ -61,7 +71,7 @@
 
 // ── Table ─────────────────────────────────────────────────────────
 .scheme-code {
-  font-family: "Courier New", monospace;
+  font-family: $font-mono;
   font-size: 13px;
   font-weight: 700;
   background: rgba($primary, 0.06);
@@ -78,7 +88,7 @@
 
 .scheme-icon {
   font-size: 14px;
-  color: $text-muted;
+  color: $gold;
   flex-shrink: 0;
 }
 

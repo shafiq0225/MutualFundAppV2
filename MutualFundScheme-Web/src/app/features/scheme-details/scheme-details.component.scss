@@ -64,7 +64,7 @@
 }
 
 .scheme-code-pill {
-  font-family: "Courier New", monospace;
+  font-family: $font-mono;
   font-size: 11px;
   color: $primary-light;
   background: rgba($primary, 0.08);
@@ -128,7 +128,7 @@
   font-size: clamp(28px, 3vw, 36px);
   font-weight: 700;
   color: #fff;
-  font-family: "Courier New", monospace;
+  font-family: $font-mono;
   letter-spacing: 0;
   line-height: 1.1;
   margin-bottom: 8px;
@@ -149,16 +149,16 @@
   border-radius: 18px;
   font-size: 12px;
   font-weight: 600;
-  font-family: "Courier New", monospace;
+  font-family: $font-mono;
 
   &--up {
-    background: rgba($success, 0.15);
-    color: $success;
+    background: rgba(127, 209, 185, 0.16);
+    color: #7FD1B9;
   }
 
   &--down {
-    background: rgba($danger, 0.15);
-    color: $danger;
+    background: rgba(232, 163, 142, 0.16);
+    color: #E8A38E;
   }
 }
 
@@ -258,16 +258,22 @@
 .week-card__label {
   font-size: 12px;
   font-weight: 700;
-  color: $page-bg;
+  color: #F3EEDF;
   margin-bottom: 3px;
 }
 
 .week-card__sub {
   font-size: 12px;
-  color: $text-muted;
+  color: #B9C3DD;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+// On the dark NAV hero, use the lighter gain/loss tones for contrast.
+.week-card {
+  .text-success { color: #7FD1B9; }
+  .text-danger  { color: #E8A38E; }
 }
 
 .week-card__right {
@@ -281,13 +287,13 @@
 .week-pct {
   font-size: 24px;
   font-weight: 700;
-  font-family: "Courier New", monospace;
+  font-family: $font-mono;
   line-height: 1;
 }
 
 .week-pts {
   font-size: 12px;
-  font-family: "Courier New", monospace;
+  font-family: $font-mono;
   @include flex-start;
   gap: 4px;
   justify-content: flex-end;
@@ -398,7 +404,7 @@
 
 .pc-pts {
   font-size: 11px;
-  font-family: "Courier New", monospace;
+  font-family: $font-mono;
   color: $text-muted;
   margin-bottom: 2px;
 }
@@ -406,7 +412,7 @@
 .pc-pct {
   font-size: 13px;
   font-weight: 700;
-  font-family: "Courier New", monospace;
+  font-family: $font-mono;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -446,7 +452,7 @@
 }
 
 .font-mono {
-  font-family: "Courier New", monospace;
+  font-family: $font-mono;
 }
 
 .text-xs {
