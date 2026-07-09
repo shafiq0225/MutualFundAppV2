@@ -51,8 +51,6 @@ export class OrdersComponent implements OnInit {
   // ── Filters ───────────────────────────────────────────────────
   investorFilter = 'all';
   schemeFilter = 'all';
-  statusFilter = 'all';
-  searchTerm = '';
   dateFrom = '';
   dateTo = '';
 
@@ -144,43 +142,55 @@ export class OrdersComponent implements OnInit {
   }
 
   // ── Filtering ─────────────────────────────────────────────────
-  applyFilters(): void {
-    let result = [...this.orders];
+  /** Investor + scheme scoped orders, ignoring the date range. */
+  private investorSchemeScoped(): InvestmentOrderDto[] {
+    return this.orders.filter(o =>
+      (this.investorFilter === 'all' || o.investorUserId === this.investorFilter) &&
+      (this.schemeFilter === 'all' || o.schemeCode === this.schemeFilter));
+  }
 
-    if (this.investorFilter !== 'all') {
-      result = result.filter(o => o.investorUserId === this.investorFilter);
-    }
-    if (this.schemeFilter !== 'all') {
-      result = result.filter(o => o.schemeCode === this.schemeFilter);
-    }
-    if (this.statusFilter !== 'all') {
-      result = result.filter(o => o.status === this.statusFilter);
-    }
-    if (this.searchTerm.trim()) {
-      const term = this.searchTerm.toLowerCase();
-      result = result.filter(o =>
-        o.orderNumber.toLowerCase().includes(term) ||
-        o.investorName.toLowerCase().includes(term) ||
-        o.schemeName.toLowerCase().includes(term));
-    }
+  applyFilters(): void {
+    let result = this.investorSchemeScoped();
     if (this.dateFrom) {
       result = result.filter(o => o.orderDate >= this.dateFrom);
     }
     if (this.dateTo) {
       result = result.filter(o => o.orderDate <= this.dateTo);
     }
-
     this.filtered = result;
   }
 
-  clearFilters(): void {
-    this.investorFilter = 'all';
-    this.schemeFilter = 'all';
-    this.statusFilter = 'all';
-    this.searchTerm = '';
+  onInvestorChange(): void {
+    if (!this.schemeFilterOptions.some(s => s.code === this.schemeFilter)) {
+      this.schemeFilter = 'all';
+    }
+    this.applyFilters();
+  }
+
+  clearDateRange(): void {
     this.dateFrom = '';
     this.dateTo = '';
     this.applyFilters();
+  }
+
+  // ── Investor / scheme option helpers ──────────────────────────
+  initials(name: string): string {
+    return (name || '?').trim().charAt(0).toUpperCase();
+  }
+
+  get allInvestorsLabel(): string {
+    const head = this.investors[0]?.fullName;
+    return head ? `${head} & Family Members` : 'All Investors';
+  }
+
+  /** Schemes present in the orders of the currently-selected investor scope. */
+  get schemeFilterOptions(): { code: string; name: string }[] {
+    const scope = this.investorFilter === 'all'
+      ? this.orders
+      : this.orders.filter(o => o.investorUserId === this.investorFilter);
+    const map = new Map<string, string>();
+    for (const o of scope) map.set(o.schemeCode, o.schemeName);
+    return Array.from(map, ([code, name]) => ({ code, name }));
   }
 
   // ── Stats ─────────────────────────────────────────────────────
@@ -194,16 +204,27 @@ export class OrdersComponent implements OnInit {
   get totalFolios(): number {
     return new Set(this.filtered.map(o => o.folioNumber).filter(Boolean)).size;
   }
-  get thisMonthCount(): number {
+  private get currentYearMonth(): string {
     const now = new Date();
-    const ym = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    return this.filtered.filter(o => o.orderDate.startsWith(ym)).length;
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  }
+  get thisMonthLabel(): string {
+    return new Date().toLocaleString('en-US', { month: 'short', year: 'numeric' });
+  }
+  get thisMonthInvested(): number {
+    const ym = this.currentYearMonth;
+    return this.investorSchemeScoped()
+      .filter(o => o.orderDate.startsWith(ym))
+      .reduce((s, o) => s + o.investedAmount, 0);
   }
 
   // ── Scheme-wise summary (clickable filter cards) ───────────────
   get schemeSummaries(): { schemeCode: string; schemeName: string; count: number; invested: number }[] {
+    const scope = this.investorFilter === 'all'
+      ? this.orders
+      : this.orders.filter(o => o.investorUserId === this.investorFilter);
     const map = new Map<string, { schemeName: string; count: number; invested: number }>();
-    for (const o of this.filtered) {
+    for (const o of scope) {
       const cur = map.get(o.schemeCode) ?? { schemeName: o.schemeName, count: 0, invested: 0 };
       cur.count++;
       cur.invested += o.investedAmount;
@@ -217,17 +238,32 @@ export class OrdersComponent implements OnInit {
     this.applyFilters();
   }
 
+  get ordersTitle(): string {
+    let title = this.investorFilter === 'all'
+      ? 'All orders'
+      : `${this.investors.find(i => i.userId === this.investorFilter)?.fullName ?? 'Investor'}'s orders`;
+    if (this.schemeFilter !== 'all') {
+      const name = this.schemeFilterOptions.find(s => s.code === this.schemeFilter)?.name;
+      if (name) title += ' · ' + name;
+    }
+    return title;
+  }
+
   // ── Display helpers ───────────────────────────────────────────
   displayStatus(status: OrderStatus): { label: string; cls: string } {
     switch (status) {
-      case 'Requested': return { label: 'Requested', cls: 'stamp-requested' };
-      case 'Assigned':  return { label: 'Assigned',  cls: 'stamp-assigned' };
-      case 'Submitted': return { label: 'Submitted', cls: 'stamp-submitted' };
+      case 'Requested': return { label: 'Requested', cls: 'requested' };
+      case 'Assigned':  return { label: 'Assigned',  cls: 'assigned' };
+      case 'Submitted': return { label: 'Submitted', cls: 'submitted' };
       case 'Verified':
-      case 'Active':    return { label: 'Active',    cls: 'stamp-active' };
-      case 'Cancelled': return { label: 'Cancelled',  cls: 'stamp-cancelled' };
+      case 'Active':    return { label: 'Active',    cls: 'active' };
+      case 'Cancelled': return { label: 'Cancelled',  cls: 'cancelled' };
       default:          return { label: status, cls: '' };
     }
+  }
+
+  setPaymentMode(mode: 'Online' | 'Cheque'): void {
+    this.newOrderForm.get('paymentMode')?.setValue(mode);
   }
 
   // ── New Order Modal ───────────────────────────────────────────
@@ -250,6 +286,7 @@ export class OrdersComponent implements OnInit {
     const schemeCode = this.newOrderForm.get('schemeCode')?.value;
     if (!investorUserId || !schemeCode) {
       this.existingFoliosForSelection = [];
+      this.useNewFolio = false;
       return;
     }
     this.existingFoliosForSelection = Array.from(new Set(
@@ -257,6 +294,26 @@ export class OrdersComponent implements OnInit {
         .filter(o => o.investorUserId === investorUserId && o.schemeCode === schemeCode && o.folioNumber)
         .map(o => o.folioNumber as string)
     ));
+    // Commit a valid default so the folio <select> isn't left uncommitted
+    // (a native select's initial [value] fires no change event).
+    if (this.existingFoliosForSelection.length) {
+      this.useNewFolio = false;
+      const current = this.newOrderForm.get('folioNumber')?.value;
+      if (!this.existingFoliosForSelection.includes(current)) {
+        this.newOrderForm.get('folioNumber')?.setValue(this.existingFoliosForSelection[0]);
+      }
+    } else {
+      this.useNewFolio = false;
+    }
+  }
+
+  onFolioSelect(value: string): void {
+    if (value === '__new__') {
+      this.useNewFolio = true;
+      this.newOrderForm.get('folioNumber')?.setValue('');
+    } else {
+      this.newOrderForm.get('folioNumber')?.setValue(value);
+    }
   }
 
   get previewUnits(): number | null {
@@ -269,6 +326,11 @@ export class OrdersComponent implements OnInit {
   submitNewOrder(): void {
     if (this.newOrderForm.invalid) {
       this.newOrderForm.markAllAsTouched();
+      const missing = this.missingRequiredLabels();
+      this.toastr.warning(
+        missing.length
+          ? `Please complete: ${missing.join(', ')}.`
+          : 'Please complete the required fields.');
       return;
     }
 
@@ -313,6 +375,21 @@ export class OrdersComponent implements OnInit {
     });
   }
 
+  private missingRequiredLabels(): string[] {
+    const labels: Record<string, string> = {
+      investorUserId: 'Investor',
+      schemeCode: 'Scheme',
+      investedAmount: 'Amount',
+      orderDate: 'Order date',
+      paymentMode: 'Payment mode',
+      folioNumber: 'Folio',
+      purchaseNAV: 'Purchase NAV'
+    };
+    return Object.keys(labels)
+      .filter(k => this.newOrderForm.get(k)?.invalid)
+      .map(k => labels[k]);
+  }
+
   // ── Drawer / Timeline ─────────────────────────────────────────
   openDrawer(order: InvestmentOrderDto): void {
     this.selectedOrder = order;
@@ -337,6 +414,21 @@ export class OrdersComponent implements OnInit {
 
   isStageCurrent(order: InvestmentOrderDto, stage: StageInfo): boolean {
     return order.status === stage.key;
+  }
+
+  stageDetail(order: InvestmentOrderDto, stage: StageInfo): string {
+    let raw: string | null | undefined;
+    let waiting = 'Pending';
+    switch (stage.key) {
+      case 'Requested': raw = order.orderDate;   waiting = 'Instruction logged, awaiting field visit'; break;
+      case 'Assigned':  raw = order.assignedDate; waiting = 'Staff assigned, visit pending'; break;
+      case 'Submitted': raw = order.submittedDate; waiting = 'Form & cheque submitted, pending verification'; break;
+      case 'Verified':  raw = order.verifiedDate ?? order.activatedDate; waiting = 'Verified and reported to family'; break;
+    }
+    if (raw) {
+      return new Date(raw).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    }
+    return this.isStageCurrent(order, stage) ? waiting : 'Pending';
   }
 
   get nextAction(): StageInfo | null {
