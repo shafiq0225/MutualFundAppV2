@@ -1,21 +1,29 @@
-// ── Design Tokens ─────────────────────────────────────────────────────────
-$bg: #0f1117;
-$surface: #181c25;
-$surface2: #1e2333;
-$border: #2a3045;
-$accent: #3b82f6;
-$accent-dim: #1d4ed8;
-$green: #22c55e;
-$red: #ef4444;
-$amber: #f59e0b;
-$text: #e2e8f0;
-$text-dim: #94a3b8;
-$text-muted: #64748b;
-$radius: 8px;
-$font: "Inter", system-ui, sans-serif;
-$font-mono: "JetBrains Mono", "Fira Code", monospace;
+// ── Passbook design tokens (mirror MutualFundInvestment-Web) ──────────────────
+$ink: #1b2a4a;
+$ink-soft: #324268;
+$parchment: #faf6ec;
+$paper: #ffffff;
+$panel: #f3eddc; // soft parchment for header rows / toolbars
+$border: #dcd3c1;
+$border-soft: #eae3d5;
+$gold: #c08a2e;
+$gold-soft: #f6ecd8;
+$steel: #5c6ea8;
+$green: #2f6f62;
+$green-soft: #e4efea;
+$red: #9c3b26;
+$red-soft: #f3e4de;
+$amber: #c08a2e;
+$text: #2a2a2a;
+$text-dim: #4a4638;
+$text-muted: #6b6455;
+$cream: #f3eedf;
+$radius: 10px;
+$font: "IBM Plex Sans", system-ui, sans-serif;
+$font-display: "Fraunces", Georgia, serif;
+$font-mono: "IBM Plex Mono", "JetBrains Mono", monospace;
 
-// ── Reset ──────────────────────────────────────────────────────────────────
+// ── Reset ─────────────────────────────────────────────────────────────────────
 *,
 *::before,
 *::after {
@@ -24,58 +32,80 @@ $font-mono: "JetBrains Mono", "Fira Code", monospace;
   padding: 0;
 }
 
-// ── Root ───────────────────────────────────────────────────────────────────
+// ── Root ──────────────────────────────────────────────────────────────────────
 .monitor {
   font-family: $font;
-  background: $bg;
+  background: $parchment;
   color: $text;
   min-height: 100vh;
   font-size: 14px;
   line-height: 1.5;
 }
 
-// ── Header ─────────────────────────────────────────────────────────────────
+// ── Header (ink cover band) ───────────────────────────────────────────────────
 .monitor-header {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 16px 24px;
-  background: $surface;
-  border-bottom: 1px solid $border;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 22px 24px 28px;
+  background: $ink;
+  border-bottom: none;
   position: sticky;
   top: 0;
   z-index: 10;
 
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 10px;
+    background-image: radial-gradient(circle, $parchment 4px, transparent 4.5px);
+    background-size: 20px 20px;
+    background-position: 6px 0;
+  }
+
   .header-brand {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
   }
 
   .brand-badge {
-    width: 36px;
-    height: 36px;
-    background: $accent;
+    width: 42px;
+    height: 42px;
+    background: none;
+    border: 1.5px solid $gold;
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
-    font-size: 13px;
-    color: #fff;
+    font-family: $font-display;
+    font-weight: 600;
+    font-size: 16px;
+    color: $gold;
     flex-shrink: 0;
   }
 
   .brand-title {
+    font-family: $font-display;
     font-weight: 600;
-    font-size: 15px;
-    color: $text;
+    font-size: 22px;
+    color: $cream;
+    line-height: 1.15;
   }
 
   .brand-sub {
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
     font-size: 11px;
-    color: $text-muted;
-    margin-top: 1px;
+    font-weight: 600;
+    color: #b9c3dd;
+    margin-bottom: 4px;
   }
 
   .header-actions {
@@ -88,14 +118,16 @@ $font-mono: "JetBrains Mono", "Fira Code", monospace;
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: $green;
+    background: #7fb0a4;
     animation: pulse 2s infinite;
   }
 
   .live-label {
     font-size: 12px;
-    color: $green;
+    color: #b9c3dd;
     font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
   }
 }
 
@@ -109,13 +141,14 @@ $font-mono: "JetBrains Mono", "Fira Code", monospace;
   }
 }
 
-// ── Global Error ───────────────────────────────────────────────────────────
+// ── Global Error ──────────────────────────────────────────────────────────────
 .global-error {
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  background: rgba($red, 0.1);
-  border: 1px solid rgba($red, 0.3);
+  background: $red-soft;
+  border: 1px solid rgba($red, 0.35);
+  border-left: 3px solid $red;
   border-radius: $radius;
   padding: 16px;
   margin: 16px 24px;
@@ -126,7 +159,7 @@ $font-mono: "JetBrains Mono", "Fira Code", monospace;
     flex-shrink: 0;
   }
   strong {
-    color: #fca5a5;
+    color: $red;
   }
   p {
     font-size: 13px;
@@ -137,32 +170,34 @@ $font-mono: "JetBrains Mono", "Fira Code", monospace;
   button {
     margin-left: auto;
     padding: 6px 14px;
-    background: rgba($red, 0.2);
-    border: 1px solid rgba($red, 0.4);
-    border-radius: 6px;
-    color: #fca5a5;
+    background: none;
+    border: 1.5px solid $red;
+    border-radius: 999px;
+    color: $red;
     cursor: pointer;
     font-size: 13px;
+    font-weight: 500;
     white-space: nowrap;
     &:hover {
-      background: rgba($red, 0.3);
+      background: rgba($red, 0.1);
     }
   }
 }
 
-// ── Body ───────────────────────────────────────────────────────────────────
+// ── Body ──────────────────────────────────────────────────────────────────────
 .monitor-body {
   padding: 24px;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 28px;
 }
 
-// ── Section ────────────────────────────────────────────────────────────────
+// ── Section (paper card) ──────────────────────────────────────────────────────
 .section {
-  background: $surface;
+  background: $paper;
   border: 1px solid $border;
   border-radius: $radius;
+  box-shadow: 0 1px 2px rgba($ink, 0.05);
   overflow: hidden;
 }
 
@@ -171,11 +206,13 @@ $font-mono: "JetBrains Mono", "Fira Code", monospace;
   align-items: center;
   gap: 8px;
   padding: 14px 20px;
+  font-family: $font-display;
   font-weight: 600;
-  font-size: 14px;
-  background: $surface2;
+  font-size: 16px;
+  background: $panel;
   border-bottom: 1px solid $border;
-  color: $text;
+  border-left: 3px solid $gold;
+  color: $ink;
 
   .section-icon {
     font-size: 16px;
@@ -186,13 +223,14 @@ $font-mono: "JetBrains Mono", "Fira Code", monospace;
     display: flex;
     gap: 6px;
     align-items: center;
+    font-family: $font;
     font-size: 12px;
-    font-weight: 400;
+    font-weight: 500;
     color: $text-muted;
   }
 }
 
-// ── Cards ──────────────────────────────────────────────────────────────────
+// ── Cards ─────────────────────────────────────────────────────────────────────
 .cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -202,8 +240,12 @@ $font-mono: "JetBrains Mono", "Fira Code", monospace;
   .card {
     padding: 20px;
     border-right: 1px solid $border;
+    border-left: 3px solid $gold;
     transition: background 0.2s;
 
+    &:first-child {
+      border-left-width: 3px;
+    }
     &:last-child {
       border-right: none;
     }
@@ -213,30 +255,32 @@ $font-mono: "JetBrains Mono", "Fira Code", monospace;
     }
 
     &.success {
-      border-top: 2px solid $green;
+      border-left-color: $green;
     }
     &.failure {
-      border-top: 2px solid $red;
+      border-left-color: $red;
     }
 
     .card-label {
       font-size: 11px;
       text-transform: uppercase;
-      letter-spacing: 0.06em;
+      letter-spacing: 0.1em;
       color: $text-muted;
       margin-bottom: 8px;
+      font-weight: 600;
     }
 
     .card-value {
+      font-family: $font-display;
       font-size: 22px;
       font-weight: 600;
-      color: $text;
+      color: $ink;
       line-height: 1.2;
 
       &.countdown {
         font-family: $font-mono;
         font-size: 18px;
-        color: $accent;
+        color: $gold;
       }
     }
 
@@ -254,15 +298,15 @@ $font-mono: "JetBrains Mono", "Fira Code", monospace;
   gap: 8px;
 }
 
-// ── Trigger Panel ──────────────────────────────────────────────────────────
+// ── Trigger Panel ─────────────────────────────────────────────────────────────
 .trigger-panel {
   padding: 20px;
 
   .trigger-panel-title {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.1em;
     color: $text-muted;
     margin-bottom: 12px;
   }
@@ -280,15 +324,16 @@ $font-mono: "JetBrains Mono", "Fira Code", monospace;
     align-items: center;
 
     input[type="date"] {
-      background: $surface2;
+      background: $paper;
       border: 1px solid $border;
-      border-radius: 6px;
+      border-radius: 8px;
       padding: 7px 12px;
       color: $text;
+      font-family: $font-mono;
       font-size: 13px;
       &:focus {
         outline: none;
-        border-color: $accent;
+        border-color: $gold;
       }
     }
   }
@@ -296,43 +341,43 @@ $font-mono: "JetBrains Mono", "Fira Code", monospace;
   .trigger-result {
     margin-top: 12px;
     padding: 10px 14px;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 13px;
 
     &.success {
-      background: rgba($green, 0.1);
+      background: $green-soft;
       border: 1px solid rgba($green, 0.3);
-      color: #86efac;
+      color: $green;
     }
     &.error {
-      background: rgba($red, 0.1);
+      background: $red-soft;
       border: 1px solid rgba($red, 0.3);
-      color: #fca5a5;
+      color: $red;
     }
   }
 }
 
-// ── Table Toolbar ──────────────────────────────────────────────────────────
+// ── Table Toolbar ─────────────────────────────────────────────────────────────
 .table-toolbar {
   display: flex;
   align-items: center;
   gap: 10px;
   padding: 12px 20px;
   border-bottom: 1px solid $border;
-  background: $surface2;
+  background: $panel;
 }
 
 .search-input {
-  background: $bg;
+  background: $paper;
   border: 1px solid $border;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 6px 12px;
   color: $text;
   font-size: 13px;
   width: 220px;
   &:focus {
     outline: none;
-    border-color: $accent;
+    border-color: $gold;
   }
   &::placeholder {
     color: $text-muted;
@@ -340,20 +385,20 @@ $font-mono: "JetBrains Mono", "Fira Code", monospace;
 }
 
 .count-sel {
-  background: $bg;
+  background: $paper;
   border: 1px solid $border;
-  border-radius: 6px;
+  border-radius: 8px;
   padding: 6px 10px;
   color: $text;
   font-size: 13px;
   cursor: pointer;
   &:focus {
     outline: none;
-    border-color: $accent;
+    border-color: $gold;
   }
 }
 
-// ── Table ──────────────────────────────────────────────────────────────────
+// ── Table (ledger) ────────────────────────────────────────────────────────────
 .table-wrap {
   overflow-x: auto;
 }
@@ -364,56 +409,61 @@ table {
   font-size: 13px;
 
   thead tr {
-    background: $surface2;
-    border-bottom: 1px solid $border;
+    background: $ink;
+    border-bottom: none;
   }
 
   th {
-    padding: 10px 16px;
+    padding: 11px 16px;
     text-align: left;
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: $text-muted;
+    letter-spacing: 0.08em;
+    color: #b9c3dd;
     cursor: pointer;
     white-space: nowrap;
     &:hover {
-      color: $text;
+      color: $cream;
     }
   }
 
   td {
     padding: 10px 16px;
-    border-bottom: 1px solid rgba($border, 0.5);
+    border-bottom: 1px solid $border-soft;
     color: $text-dim;
     white-space: nowrap;
+  }
+
+  tbody tr:nth-child(even) td {
+    background: rgba($panel, 0.5);
   }
 
   tr:last-child td {
     border-bottom: none;
   }
 
-  tr:hover td {
-    background: rgba($accent, 0.04);
+  tbody tr:hover td {
+    background: $gold-soft;
   }
 
   .num {
     font-family: $font-mono;
     font-size: 12px;
+    color: $ink;
   }
   .center {
     text-align: center;
   }
 
   .success-row td {
-    background: rgba($green, 0.03);
+    background: rgba($green, 0.05);
   }
   .failure-row td {
-    background: rgba($red, 0.04);
+    background: rgba($red, 0.05);
   }
   .holiday-row td {
-    background: rgba($amber, 0.04);
+    background: rgba($amber, 0.06);
   }
 
   .clickable {
@@ -432,23 +482,23 @@ table {
     overflow: hidden;
   }
   .error-preview {
-    color: #fca5a5;
+    color: $red;
     font-size: 12px;
   }
 }
 
-// ── Detail Row ─────────────────────────────────────────────────────────────
+// ── Detail Row ────────────────────────────────────────────────────────────────
 .detail-row td {
-  background: rgba($red, 0.06) !important;
+  background: $red-soft !important;
   padding: 0 !important;
-  border-bottom: 1px solid rgba($red, 0.2) !important;
+  border-bottom: 1px solid rgba($red, 0.25) !important;
 }
 
 .error-detail-box {
   padding: 16px 20px;
 
   strong {
-    color: #fca5a5;
+    color: $red;
     font-size: 12px;
   }
 
@@ -459,35 +509,35 @@ table {
     white-space: pre-wrap;
     margin-top: 6px;
     margin-bottom: 12px;
-    background: $bg;
-    border-radius: 4px;
+    background: $parchment;
+    border-radius: 6px;
     padding: 10px;
     border: 1px solid $border;
   }
 }
 
-// ── API Error ──────────────────────────────────────────────────────────────
+// ── API Error ─────────────────────────────────────────────────────────────────
 .api-error {
   padding: 12px 20px;
-  background: rgba($red, 0.08);
-  color: #fca5a5;
+  background: $red-soft;
+  color: $red;
   font-size: 13px;
-  border-bottom: 1px solid rgba($red, 0.2);
+  border-bottom: 1px solid rgba($red, 0.25);
 }
 
-// ── Buttons ────────────────────────────────────────────────────────────────
+// ── Buttons ───────────────────────────────────────────────────────────────────
 .btn-primary {
-  padding: 8px 18px;
-  background: $accent;
-  border: none;
-  border-radius: 6px;
-  color: #fff;
+  padding: 9px 20px;
+  background: $ink;
+  border: 1.5px solid $ink;
+  border-radius: 999px;
+  color: $cream;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: background 0.15s;
   &:hover:not(:disabled) {
-    background: $accent-dim;
+    background: $ink-soft;
   }
   &:disabled {
     opacity: 0.5;
@@ -496,16 +546,17 @@ table {
 }
 
 .btn-secondary {
-  padding: 7px 16px;
-  background: $surface2;
-  border: 1px solid $border;
-  border-radius: 6px;
-  color: $text;
+  padding: 8px 18px;
+  background: none;
+  border: 1.5px solid $gold;
+  border-radius: 999px;
+  color: $gold;
   font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: background 0.15s;
   &:hover:not(:disabled) {
-    border-color: $accent;
+    background: rgba($gold, 0.12);
   }
   &:disabled {
     opacity: 0.5;
@@ -514,16 +565,16 @@ table {
 }
 
 .btn-refresh {
-  padding: 7px 14px;
-  background: $surface2;
-  border: 1px solid $border;
-  border-radius: 6px;
-  color: $text-dim;
+  padding: 8px 16px;
+  background: none;
+  border: 1.5px solid $gold;
+  border-radius: 999px;
+  color: $gold;
   font-size: 13px;
+  font-weight: 500;
   cursor: pointer;
   &:hover:not(:disabled) {
-    color: $text;
-    border-color: $accent;
+    background: rgba($gold, 0.14);
   }
   &:disabled {
     opacity: 0.5;
@@ -531,20 +582,20 @@ table {
 }
 
 .btn-sm {
-  padding: 5px 12px;
-  background: $surface;
-  border: 1px solid $border;
-  border-radius: 6px;
-  color: $text-dim;
+  padding: 6px 14px;
+  background: none;
+  border: 1.5px solid $gold;
+  border-radius: 999px;
+  color: $gold;
   font-size: 12px;
+  font-weight: 500;
   cursor: pointer;
   &:hover {
-    color: $text;
-    border-color: $accent;
+    background: rgba($gold, 0.14);
   }
 }
 
-// ── Status Dot ─────────────────────────────────────────────────────────────
+// ── Status Dot ────────────────────────────────────────────────────────────────
 .status-dot {
   display: inline-block;
   width: 8px;
@@ -565,37 +616,44 @@ table {
   }
 }
 
-// ── Pills ──────────────────────────────────────────────────────────────────
+// ── Pills (dashed stamps) ─────────────────────────────────────────────────────
 .pill {
   display: inline-flex;
   align-items: center;
-  padding: 2px 8px;
-  border-radius: 999px;
+  padding: 2px 10px;
+  border-radius: 6px;
+  border: 1px dashed transparent;
+  font-family: $font-mono;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 
   &.green {
-    background: rgba($green, 0.15);
+    background: $green-soft;
+    border-color: rgba($green, 0.5);
     color: $green;
   }
   &.red {
-    background: rgba($red, 0.15);
+    background: $red-soft;
+    border-color: rgba($red, 0.5);
     color: $red;
   }
   &.grey {
-    background: rgba($text-muted, 0.15);
+    background: rgba($text-muted, 0.12);
+    border-color: rgba($text-muted, 0.4);
     color: $text-muted;
   }
 }
 
-// ── Responsive ─────────────────────────────────────────────────────────────
+// ── Responsive ────────────────────────────────────────────────────────────────
 @media (max-width: 640px) {
   .monitor-body {
     padding: 12px;
     gap: 20px;
   }
   .monitor-header {
-    padding: 12px 16px;
+    padding: 18px 16px 24px;
   }
   .cards {
     grid-template-columns: 1fr 1fr;
