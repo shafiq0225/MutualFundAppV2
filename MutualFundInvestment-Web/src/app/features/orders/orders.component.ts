@@ -286,6 +286,7 @@ export class OrdersComponent implements OnInit {
     const schemeCode = this.newOrderForm.get('schemeCode')?.value;
     if (!investorUserId || !schemeCode) {
       this.existingFoliosForSelection = [];
+      this.useNewFolio = false;
       return;
     }
     this.existingFoliosForSelection = Array.from(new Set(
@@ -293,6 +294,17 @@ export class OrdersComponent implements OnInit {
         .filter(o => o.investorUserId === investorUserId && o.schemeCode === schemeCode && o.folioNumber)
         .map(o => o.folioNumber as string)
     ));
+    // Commit a valid default so the folio <select> isn't left uncommitted
+    // (a native select's initial [value] fires no change event).
+    if (this.existingFoliosForSelection.length) {
+      this.useNewFolio = false;
+      const current = this.newOrderForm.get('folioNumber')?.value;
+      if (!this.existingFoliosForSelection.includes(current)) {
+        this.newOrderForm.get('folioNumber')?.setValue(this.existingFoliosForSelection[0]);
+      }
+    } else {
+      this.useNewFolio = false;
+    }
   }
 
   onFolioSelect(value: string): void {
@@ -314,6 +326,11 @@ export class OrdersComponent implements OnInit {
   submitNewOrder(): void {
     if (this.newOrderForm.invalid) {
       this.newOrderForm.markAllAsTouched();
+      const missing = this.missingRequiredLabels();
+      this.toastr.warning(
+        missing.length
+          ? `Please complete: ${missing.join(', ')}.`
+          : 'Please complete the required fields.');
       return;
     }
 
@@ -356,6 +373,21 @@ export class OrdersComponent implements OnInit {
         this.toastr.error(err?.error?.error ?? 'Failed to create order.');
       }
     });
+  }
+
+  private missingRequiredLabels(): string[] {
+    const labels: Record<string, string> = {
+      investorUserId: 'Investor',
+      schemeCode: 'Scheme',
+      investedAmount: 'Amount',
+      orderDate: 'Order date',
+      paymentMode: 'Payment mode',
+      folioNumber: 'Folio',
+      purchaseNAV: 'Purchase NAV'
+    };
+    return Object.keys(labels)
+      .filter(k => this.newOrderForm.get(k)?.invalid)
+      .map(k => labels[k]);
   }
 
   // ── Drawer / Timeline ─────────────────────────────────────────

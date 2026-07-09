@@ -8,19 +8,17 @@
       <div class="eyebrow">Investment Placement Workflow</div>
 
       <div class="cover-controls">
-        <div class="selects-row">
-          <div>
-            <div class="investor-select-wrap">
-              <select class="investor-select" [(ngModel)]="investorFilter" (ngModelChange)="onInvestorChange()">
-                <option value="all">{{ allInvestorsLabel }}</option>
-                <option *ngFor="let inv of investors" [value]="inv.userId">
-                  {{ inv.fullName }}<ng-container *ngIf="inv.relation"> ({{ inv.relation }})</ng-container>
-                </option>
-              </select>
-            </div>
-          </div>
+        <div class="investor-select-wrap">
+          <select class="investor-select" [(ngModel)]="investorFilter" (ngModelChange)="onInvestorChange()">
+            <option value="all">{{ allInvestorsLabel }}</option>
+            <option *ngFor="let inv of investors" [value]="inv.userId">
+              {{ inv.fullName }}<ng-container *ngIf="inv.relation"> ({{ inv.relation }})</ng-container>
+            </option>
+          </select>
+        </div>
 
-          <div>
+        <div class="controls-row">
+          <div class="control">
             <div class="filter-label">Scheme</div>
             <div class="scheme-filter-wrap">
               <select class="scheme-filter" [(ngModel)]="schemeFilter" (ngModelChange)="applyFilters()">
@@ -30,7 +28,7 @@
             </div>
           </div>
 
-          <div>
+          <div class="control">
             <div class="filter-label">Order Date Range</div>
             <div class="date-range-wrap">
               <input type="date" class="date-filter" [(ngModel)]="dateFrom" (ngModelChange)="applyFilters()" />
@@ -39,9 +37,9 @@
               <button type="button" class="date-range-clear" (click)="clearDateRange()">Clear</button>
             </div>
           </div>
-        </div>
 
-        <button type="button" class="btn-gold" (click)="openNewOrderModal()">+ New order</button>
+          <button type="button" class="btn-gold" (click)="openNewOrderModal()">+ New order</button>
+        </div>
       </div>
 
       <div class="stat-strip">
