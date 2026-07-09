@@ -1,5 +1,25 @@
 <app-loading-spinner *ngIf="loading" message="Loading portfolio..."></app-loading-spinner>
 
+<!-- ===== Reusable donut + legend templates ===== -->
+<ng-template #donutTpl let-d>
+  <svg [attr.width]="d.size" [attr.height]="d.size" [attr.viewBox]="'0 0 ' + d.size + ' ' + d.size">
+    <circle [attr.cx]="d.cx" [attr.cy]="d.cy" [attr.r]="d.r" fill="none"
+            stroke="rgba(255,255,255,0.08)" [attr.stroke-width]="d.thickness"></circle>
+    <circle *ngFor="let a of d.arcs" [attr.cx]="d.cx" [attr.cy]="d.cy" [attr.r]="d.r" fill="none"
+            [attr.stroke]="a.color" [attr.stroke-width]="d.thickness"
+            [attr.stroke-dasharray]="a.dasharray" [attr.stroke-dashoffset]="a.dashoffset"
+            [attr.transform]="'rotate(-90 ' + d.cx + ' ' + d.cy + ')'"></circle>
+  </svg>
+</ng-template>
+
+<ng-template #legendTpl let-items let-mini="mini">
+  <div *ngFor="let it of items">
+    <span [class]="mini ? 'scheme-legend-dot' : 'legend-dot'" [style.background]="it.color"></span>
+    <span [class]="mini ? 'scheme-legend-period' : 'legend-period'">{{ it.label }}</span>
+    <span [class]="(mini ? 'scheme-legend-figure ' : 'legend-figure ') + (it.positive ? 'gain' : 'loss')">{{ it.text }}</span>
+  </div>
+</ng-template>
+
 <!-- ===== HEADER / PASSBOOK COVER ===== -->
 <div class="cover" *ngIf="!loading && overview">
   <div class="cover-inner">
@@ -32,6 +52,12 @@
           <button type="button" class="date-range-clear" (click)="clearDateRange()">Clear</button>
         </div>
       </div>
+      <div>
+        <div class="filter-label">Job Snapshot</div>
+        <button type="button" class="snapshot-btn" (click)="triggerSnapshot()" [disabled]="isTriggeringSnapshot">
+          {{ isTriggeringSnapshot ? 'Running…' : '↻ Run Snapshot' }}
+        </button>
+      </div>
     </div>
 
     <div class="cover-grid">
@@ -44,17 +70,21 @@
 
       <div class="donuts-row">
         <div class="donut-panel">
-          <svg id="returnsDonut" width="100" height="100" viewBox="0 0 100 100"></svg>
+          <ng-container *ngTemplateOutlet="donutTpl; context:{ $implicit: coverReturns?.donut }"></ng-container>
           <div>
             <div class="donut-panel-title">Returns by Period</div>
-            <div class="donut-legend" id="returnsLegend"></div>
+            <div class="donut-legend">
+              <ng-container *ngTemplateOutlet="legendTpl; context:{ $implicit: coverReturns?.legend }"></ng-container>
+            </div>
           </div>
         </div>
         <div class="donut-panel">
-          <svg id="pnlDonut" width="100" height="100" viewBox="0 0 100 100"></svg>
+          <ng-container *ngTemplateOutlet="donutTpl; context:{ $implicit: coverPnl?.donut }"></ng-container>
           <div>
             <div class="donut-panel-title">P&amp;L by Period</div>
-            <div class="donut-legend" id="pnlLegend"></div>
+            <div class="donut-legend">
+              <ng-container *ngTemplateOutlet="legendTpl; context:{ $implicit: coverPnl?.legend }"></ng-container>
+            </div>
           </div>
         </div>
       </div>
@@ -97,9 +127,9 @@
         <span class="section-sub">Tap a scheme to view the full transaction ledger</span>
       </div>
       <div class="scheme-grid">
-        <div class="scheme-card" *ngFor="let s of filteredSchemes" (click)="openSchemeDetail(s)" tabindex="0">
+        <div class="scheme-card" *ngFor="let s of filteredSchemes" (click)="openSchemeDetail(s)" tabindex="0" (keydown.enter)="openSchemeDetail(s)">
           <div class="scheme-top">
-            <div class="scheme-name">{{ s.schemeName }}<span class="scheme-plan">{{ s.fundName }}</span><span class="scheme-owner" *ngIf="selectedUserId === 'family'">{{ getOwnerName(s) }}</span></div>
+            <div class="scheme-name">{{ s.schemeName }}<span class="scheme-plan">{{ s.fundName }}</span><span class="scheme-owner" *ngIf="selectedUserId === 'family'">{{ s.ownerName }}</span></div>
           </div>
           <div class="scheme-body">
             <div class="scheme-stats">
@@ -113,17 +143,21 @@
           </div>
           <div class="scheme-donuts">
             <div class="scheme-donut-panel">
-              <svg [id]="'ret-donut-' + s.holdingId" width="60" height="60" viewBox="0 0 60 60"></svg>
+              <ng-container *ngTemplateOutlet="donutTpl; context:{ $implicit: s.returns.donut }"></ng-container>
               <div>
                 <div class="scheme-donut-title">Returns by Period</div>
-                <div class="scheme-donut-legend" [id]="'ret-legend-' + s.holdingId"></div>
+                <div class="scheme-donut-legend">
+                  <ng-container *ngTemplateOutlet="legendTpl; context:{ $implicit: s.returns.legend, mini: true }"></ng-container>
+                </div>
               </div>
             </div>
             <div class="scheme-donut-panel">
-              <svg [id]="'pnl-donut-' + s.holdingId" width="60" height="60" viewBox="0 0 60 60"></svg>
+              <ng-container *ngTemplateOutlet="donutTpl; context:{ $implicit: s.pnl.donut }"></ng-container>
               <div>
                 <div class="scheme-donut-title">P&amp;L by Period</div>
-                <div class="scheme-donut-legend" [id]="'pnl-legend-' + s.holdingId"></div>
+                <div class="scheme-donut-legend">
+                  <ng-container *ngTemplateOutlet="legendTpl; context:{ $implicit: s.pnl.legend, mini: true }"></ng-container>
+                </div>
               </div>
             </div>
           </div>

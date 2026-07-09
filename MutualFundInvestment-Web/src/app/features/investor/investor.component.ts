@@ -1,26 +1,87 @@
-import { Component, OnInit, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 
 import { FamilyPortfolioService } from '../../core/services/family-portfolio.service';
 import { HoldingsService } from '../../core/services/holdings.service';
 import { AuthFamilyService } from '../../core/services/auth-family.service';
-import { FamilyOverviewDto, MemberSummaryDto, HoldingCardDto, QuickReturnDto } from '../../core/models/family-portfolio.model';
+import {
+  FamilyOverviewDto,
+  MemberSummaryDto,
+  HoldingCardDto,
+  QuickReturnDto
+} from '../../core/models/family-portfolio.model';
 import { HoldingDto } from '../../core/models/holding.model';
 import { AuthFamilyMemberDto } from '../../core/models/auth-family.model';
 import { LoadingSpinnerComponent } from '../../shared/components/loading-spinner/loading-spinner.component';
-import { DonutChartComponent, DonutSegment } from '../../shared/components/donut-chart/donut-chart.component';
 
 type PeriodKey = 'yesterday' | 'thisWeek' | 'oneMonth' | 'oneYear';
 
-const PERIODS: { key: PeriodKey; label: string }[] = [
-  { key: 'yesterday', label: 'Yesterday' },
-  { key: 'thisWeek',  label: 'This Week' },
-  { key: 'oneMonth',  label: '1 Month' },
-  { key: 'oneYear',   label: '1 Year' }
+interface PeriodDef {
+  key: PeriodKey;
+  label: string;
+  color: string;
+}
+
+const PERIODS: PeriodDef[] = [
+  { key: 'yesterday', label: 'Yesterday', color: '#C08A2E' },
+  { key: 'thisWeek', label: 'This Week', color: '#5C6EA8' },
+  { key: 'oneMonth', label: '1 Month', color: '#7FD1B9' },
+  { key: 'oneYear', label: '1 Year', color: '#E8A38E' }
 ];
+
+interface DonutArc {
+  dasharray: string;
+  dashoffset: number;
+  color: string;
+}
+
+interface DonutModel {
+  size: number;
+  thickness: number;
+  cx: number;
+  cy: number;
+  r: number;
+  arcs: DonutArc[];
+}
+
+interface LegendItem {
+  color: string;
+  label: string;
+  text: string;
+  positive: boolean;
+}
+
+interface PeriodDonut {
+  donut: DonutModel;
+  legend: LegendItem[];
+}
+
+/** A per-scheme aggregated card ready for display. */
+interface SchemeCardVm {
+  holdingId: number;
+  schemeCode: string;
+  schemeName: string;
+  fundName: string;
+  ownerName: string;
+  investedAmount: number;
+  currentValue: number;
+  units: number;
+  gain: number;
+  gainPercent: number;
+  isGain: boolean;
+  returns: PeriodDonut;
+  pnl: PeriodDonut;
+}
+
+/** A holding card tagged with its owning investor. */
+type OwnedHoldingCard = HoldingCardDto & {
+  investorUserId: string;
+  investorName: string;
+};
 
 @Component({
   selector: 'app-investor',
@@ -29,23 +90,27 @@ const PERIODS: { key: PeriodKey; label: string }[] = [
   templateUrl: './investor.component.html',
   styleUrls: ['./investor.component.scss']
 })
-export class InvestorComponent implements OnInit, AfterViewInit {
+export class InvestorComponent implements OnInit {
   loading = true;
   overview: FamilyOverviewDto | null = null;
   relationshipMap = new Map<string, AuthFamilyMemberDto>();
+
   allHoldings: HoldingDto[] = [];
+  allCards: OwnedHoldingCard[] = [];
 
   periods = PERIODS;
   selectedUserId = 'family'; // 'family' = aggregate view, else a userId
 
-  memberHoldings: HoldingCardDto[] = [];
-  loadingMemberDetail = false;
+  // Cover donuts
+  coverReturns: PeriodDonut | null = null;
+  coverPnl: PeriodDonut | null = null;
+
+  // Scheme cards for the current selection
+  schemeCards: SchemeCardVm[] = [];
 
   // Detail-view (per-scheme ledger)
-  selectedScheme: HoldingCardDto | null = null;
+  selectedScheme: SchemeCardVm | null = null;
   ledgerRows: HoldingDto[] = [];
-  ledgerDateFrom = '';
-  ledgerDateTo = '';
 
   // Snapshot job trigger
   isTriggeringSnapshot = false;
@@ -58,18 +123,6 @@ export class InvestorComponent implements OnInit, AfterViewInit {
   // View state
   showDetailView = false;
 
-  // ViewChild references for donut charts
-  @ViewChild('returnsDonut', { static: false }) returnsDonut!: ElementRef;
-  @ViewChild('pnlDonut', { static: false }) pnlDonut!: ElementRef;
-
-  // Period colors matching reference
-  private readonly PERIOD_COLORS = {
-    yesterday: '#C08A2E',
-    thisWeek: '#5C6EA8',
-    oneMonth: '#7FD1B9',
-    oneYear: '#E8A38E'
-  };
-
   constructor(
     private familyService: FamilyPortfolioService,
     private holdingsService: HoldingsService,
@@ -81,71 +134,7 @@ export class InvestorComponent implements OnInit, AfterViewInit {
     this.loadAll();
   }
 
-  ngAfterViewInit(): void {
-    // Render donut charts after view is initialized
-    this.renderDonutCharts();
-  }
-
-  private renderDonutCharts(): void {
-    if (!this.overview) return;
-
-    const headline = this.headline;
-    if (!headline) return;
-
-    // Get period returns for donut charts
-    const periodReturns = {
-      yesterday: this.periodReturnOf(headline, 'yesterday'),
-      thisWeek: this.periodReturnOf(headline, 'thisWeek'),
-      oneMonth: this.periodReturnOf(headline, 'oneMonth'),
-      oneYear: this.periodReturnOf(headline, 'oneYear')
-    };
-
-    // Render returns donut
-    this.drawDonut(this.returnsDonut, periodReturns, true);
-    // Render P&L donut
-    this.drawDonut(this.pnlDonut, periodReturns, false);
-  }
-
-  private drawDonut(svgElement: ElementRef, periodReturns: any, isPercent: boolean): void {
-    if (!svgElement || !svgElement.nativeElement) return;
-
-    const svg = svgElement.nativeElement;
-    const size = 100;
-    const thickness = 13;
-    const r = (size - thickness) / 2;
-    const cx = size / 2;
-    const cy = size / 2;
-    const circumference = 2 * Math.PI * r;
-
-    const periods = Object.keys(periodReturns);
-    const values = periods.map(p => {
-      const ret = periodReturns[p];
-      if (!ret || !ret.hasData) return 0;
-      return isPercent ? Math.abs(ret.returnPercent) : Math.abs(ret.returnAmount);
-    });
-
-    const totalAbs = values.reduce((s: number, v: number) => s + v, 0) || 1;
-    let offset = 0;
-
-    let html = `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="${thickness}"/>`;
-
-    periods.forEach((p, i) => {
-      const ret = periodReturns[p];
-      if (!ret || !ret.hasData) return;
-
-      const weight = values[i] / totalAbs;
-      const len = circumference * weight;
-      const color = this.PERIOD_COLORS[p as keyof typeof this.PERIOD_COLORS];
-
-      html += `<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${color}"
-        stroke-width="${thickness}" stroke-dasharray="${len} ${circumference - len}"
-        stroke-dashoffset="${-offset}" transform="rotate(-90 ${cx} ${cy})"/>`;
-      offset += len;
-    });
-
-    svg.innerHTML = html;
-  }
-
+  // ── Data loading ──────────────────────────────────────────────
   loadAll(): void {
     this.loading = true;
 
@@ -157,11 +146,55 @@ export class InvestorComponent implements OnInit, AfterViewInit {
         this.overview = overview;
         this.allHoldings = holdings;
         this.loadRelationships();
-        this.loading = false;
+        this.loadMemberCards(overview);
       },
       error: () => {
         this.loading = false;
         this.toastr.error('Failed to load family portfolio.');
+      }
+    });
+  }
+
+  /**
+   * Fetch each member's holding cards (which carry the per-period
+   * returns needed for the donuts) and flatten them into a single
+   * owner-tagged list used to build the scheme cards.
+   */
+  private loadMemberCards(overview: FamilyOverviewDto): void {
+    const members = overview.members ?? [];
+    if (members.length === 0) {
+      this.allCards = [];
+      this.rebuildView();
+      this.loading = false;
+      return;
+    }
+
+    forkJoin(
+      members.map(m =>
+        this.familyService.getMemberHoldings(m.investorUserId).pipe(
+          map(res =>
+            (res.holdings ?? []).map(
+              h =>
+                ({
+                  ...h,
+                  investorUserId: m.investorUserId,
+                  investorName: m.investorName
+                }) as OwnedHoldingCard
+            )
+          ),
+          catchError(() => of([] as OwnedHoldingCard[]))
+        )
+      )
+    ).subscribe({
+      next: (lists) => {
+        this.allCards = lists.reduce((acc, list) => acc.concat(list), []);
+        this.rebuildView();
+        this.loading = false;
+      },
+      error: () => {
+        this.allCards = [];
+        this.rebuildView();
+        this.loading = false;
       }
     });
   }
@@ -171,165 +204,255 @@ export class InvestorComponent implements OnInit, AfterViewInit {
     if (!anyUserId) return;
 
     this.authFamilyService.getRelationshipMapForUser(anyUserId).subscribe({
-      next: (map) => this.relationshipMap = map,
-      error: () => { /* non-fatal */ }
+      next: (map) => (this.relationshipMap = map),
+      error: () => {
+        /* non-fatal */
+      }
     });
   }
 
-  relationOf(userId: string): string {
-    return this.relationshipMap.get(userId)?.relationshipType ?? '';
-  }
-
-  panOf(userId: string): string {
-    return this.relationshipMap.get(userId)?.panNumber ?? userId;
-  }
-
-  memberSinceOf(userId: string): string | null {
-    return this.relationshipMap.get(userId)?.addedAt ?? null;
-  }
-
-  foliosLinkedFor(userId: string): number {
-    return new Set(
-      this.allHoldings.filter(h => h.investorUserId === userId).map(h => h.folioNumber)
-    ).size;
-  }
-
-  // ── Member Selector ───────────────────────────────────────────
+  // ── Member selector ───────────────────────────────────────────
   selectMember(userId: string): void {
     this.selectedUserId = userId;
     this.selectedScheme = null;
-
-    if (userId === 'family') {
-      // Aggregate holdings from all family members using allHoldings
-      this.memberHoldings = this.aggregateFamilyHoldings();
-      return;
-    }
-
-    this.loadingMemberDetail = true;
-    this.familyService.getMemberHoldings(userId).subscribe({
-      next: (data) => {
-        this.memberHoldings = data.holdings;
-        this.loadingMemberDetail = false;
-      },
-      error: () => {
-        this.loadingMemberDetail = false;
-        this.toastr.error('Failed to load member holdings.');
-      }
-    });
-  }
-
-  private aggregateFamilyHoldings(): HoldingCardDto[] {
-    // Group holdings by scheme code and aggregate values
-    const schemeMap = new Map<string, HoldingCardDto>();
-
-    this.allHoldings.forEach(holding => {
-      const existing = schemeMap.get(holding.schemeCode);
-      if (existing) {
-        existing.investedAmount += holding.investedAmount;
-        existing.currentValue += holding.currentValue;
-        existing.gain += holding.profitLoss;
-        existing.units += holding.units;
-        existing.gainPercent = existing.investedAmount > 0
-          ? (existing.gain / existing.investedAmount) * 100
-          : 0;
-        existing.isGain = existing.gain >= 0;
-      } else {
-        const gainPercent = holding.investedAmount > 0
-          ? (holding.profitLoss / holding.investedAmount) * 100
-          : 0;
-        schemeMap.set(holding.schemeCode, {
-          holdingId: holding.id,
-          schemeCode: holding.schemeCode,
-          schemeName: holding.schemeName,
-          fundName: holding.fundName,
-          folioNumber: holding.folioNumber,
-          orderNumber: holding.orderNumber,
-          investedAmount: holding.investedAmount,
-          units: holding.units,
-          purchaseNAV: holding.purchaseNAV,
-          currentNAV: holding.currentNAV,
-          currentValue: holding.currentValue,
-          gain: holding.profitLoss,
-          gainPercent: gainPercent,
-          isGain: holding.profitLoss >= 0
-        });
-      }
-    });
-
-    return Array.from(schemeMap.values());
+    this.showDetailView = false;
+    this.schemeFilter = 'all';
+    this.rebuildView();
   }
 
   get currentMember(): MemberSummaryDto | null {
     if (this.selectedUserId === 'family' || !this.overview) return null;
-    return this.overview.members.find(m => m.investorUserId === this.selectedUserId) ?? null;
+    return (
+      this.overview.members.find(m => m.investorUserId === this.selectedUserId) ??
+      null
+    );
   }
 
-  // ── Aggregate stat helpers ────────────────────────────────────
-  get headline() {
-    return this.currentMember ?? this.overview;
+  // ── View builders ─────────────────────────────────────────────
+  private rebuildView(): void {
+    this.buildCoverDonuts();
+    this.buildSchemeCards();
   }
 
-  get currentValue(): number {
-    const h = this.headline;
-    if (!h) return 0;
-    return (h as any).totalCurrentValue || (h as any).totalFamilyCurrentValue || 0;
+  private buildCoverDonuts(): void {
+    if (!this.overview) {
+      this.coverReturns = null;
+      this.coverPnl = null;
+      return;
+    }
+
+    const pct: number[] = [];
+    const amt: number[] = [];
+
+    if (this.selectedUserId === 'family') {
+      const members = this.overview.members ?? [];
+      PERIODS.forEach(p => {
+        let totalAmt = 0;
+        let weightedPct = 0;
+        let weight = 0;
+        members.forEach(m => {
+          const r = this.returnOf(m, p.key);
+          if (r?.hasData) {
+            totalAmt += r.periodGainAmount;
+            weightedPct += r.returnPercent * m.totalInvested;
+            weight += m.totalInvested;
+          }
+        });
+        amt.push(totalAmt);
+        pct.push(weight > 0 ? weightedPct / weight : 0);
+      });
+    } else {
+      const member = this.currentMember;
+      PERIODS.forEach(p => {
+        const r = member ? this.returnOf(member, p.key) : null;
+        pct.push(r?.hasData ? r.returnPercent : 0);
+        amt.push(r?.hasData ? r.periodGainAmount : 0);
+      });
+    }
+
+    this.coverReturns = this.buildPeriodDonut(pct, true, 100, 13);
+    this.coverPnl = this.buildPeriodDonut(amt, false, 100, 13);
   }
 
+  private buildSchemeCards(): void {
+    const scoped =
+      this.selectedUserId === 'family'
+        ? this.allCards
+        : this.allCards.filter(c => c.investorUserId === this.selectedUserId);
+
+    // Group holdings (one per order) into a single card per scheme.
+    const groups = new Map<string, OwnedHoldingCard[]>();
+    scoped.forEach(c => {
+      const list = groups.get(c.schemeCode);
+      if (list) list.push(c);
+      else groups.set(c.schemeCode, [c]);
+    });
+
+    const cards: SchemeCardVm[] = [];
+    groups.forEach((list, schemeCode) => {
+      const invested = list.reduce((s, c) => s + c.investedAmount, 0);
+      const currentValue = list.reduce((s, c) => s + c.currentValue, 0);
+      const units = list.reduce((s, c) => s + c.units, 0);
+      const gain = list.reduce((s, c) => s + c.gain, 0);
+      const gainPercent = invested > 0 ? (gain / invested) * 100 : 0;
+
+      const owners = Array.from(new Set(list.map(c => c.investorName)));
+
+      const pct: number[] = [];
+      const amt: number[] = [];
+      PERIODS.forEach(p => {
+        let totalAmt = 0;
+        let weightedPct = 0;
+        let weight = 0;
+        list.forEach(c => {
+          const r = this.returnOf(c, p.key);
+          if (r?.hasData) {
+            totalAmt += r.periodGainAmount;
+            weightedPct += r.returnPercent * c.investedAmount;
+            weight += c.investedAmount;
+          }
+        });
+        amt.push(totalAmt);
+        pct.push(weight > 0 ? weightedPct / weight : 0);
+      });
+
+      cards.push({
+        holdingId: list[0].holdingId,
+        schemeCode,
+        schemeName: list[0].schemeName,
+        fundName: list[0].fundName,
+        ownerName: owners.join(', '),
+        investedAmount: invested,
+        currentValue,
+        units,
+        gain,
+        gainPercent,
+        isGain: gain >= 0,
+        returns: this.buildPeriodDonut(pct, true, 60, 8),
+        pnl: this.buildPeriodDonut(amt, false, 60, 8)
+      });
+    });
+
+    this.schemeCards = cards.sort((a, b) =>
+      a.schemeName.localeCompare(b.schemeName)
+    );
+  }
+
+  private returnOf(
+    source: MemberSummaryDto | HoldingCardDto,
+    key: PeriodKey
+  ): QuickReturnDto | null | undefined {
+    return (source as unknown as Record<PeriodKey, QuickReturnDto | null | undefined>)[key];
+  }
+
+  // ── Donut / legend construction ───────────────────────────────
+  private buildPeriodDonut(
+    values: number[],
+    isPercent: boolean,
+    size: number,
+    thickness: number
+  ): PeriodDonut {
+    const r = (size - thickness) / 2;
+    const cx = size / 2;
+    const cy = size / 2;
+    const circumference = 2 * Math.PI * r;
+    const totalAbs = values.reduce((s, v) => s + Math.abs(v), 0) || 1;
+
+    let offset = 0;
+    const arcs: DonutArc[] = values.map((v, i) => {
+      const len = circumference * (Math.abs(v) / totalAbs);
+      const arc: DonutArc = {
+        dasharray: `${len} ${circumference - len}`,
+        dashoffset: -offset,
+        color: PERIODS[i].color
+      };
+      offset += len;
+      return arc;
+    });
+
+    const legend: LegendItem[] = values.map((v, i) => ({
+      color: PERIODS[i].color,
+      label: PERIODS[i].label,
+      text: isPercent ? this.signedPct(v) : this.signedRupee(v),
+      positive: v >= 0
+    }));
+
+    return { donut: { size, thickness, cx, cy, r, arcs }, legend };
+  }
+
+  // ── Formatting helpers (match reference) ──────────────────────
+  fmt(n: number): string {
+    return Math.round(Math.abs(n)).toLocaleString('en-IN');
+  }
+  signedPct(n: number): string {
+    return (n >= 0 ? '+' : '-') + Math.abs(n).toFixed(2) + '%';
+  }
+  signedRupee(n: number): string {
+    return (n >= 0 ? '+' : '-') + '₹' + this.fmt(n);
+  }
+
+  // ── Aggregate stat helpers (cover) ────────────────────────────
   get totalInvested(): number {
-    const h = this.headline;
-    if (!h) return 0;
-    return (h as any).totalInvested || (h as any).totalFamilyInvested || 0;
+    if (this.selectedUserId === 'family') {
+      return this.overview?.totalFamilyInvested ?? 0;
+    }
+    return this.currentMember?.totalInvested ?? 0;
   }
-
+  get currentValue(): number {
+    if (this.selectedUserId === 'family') {
+      return this.overview?.totalFamilyCurrentValue ?? 0;
+    }
+    return this.currentMember?.totalCurrentValue ?? 0;
+  }
   get totalGain(): number {
-    const h = this.headline;
-    if (!h) return 0;
-    return (h as any).totalGain || (h as any).totalFamilyGain || 0;
+    if (this.selectedUserId === 'family') {
+      return this.overview?.totalFamilyGain ?? 0;
+    }
+    return this.currentMember?.totalGain ?? 0;
   }
-
   get totalGainPercent(): number {
-    const h = this.headline;
-    if (!h) return 0;
-    return (h as any).totalGainPercent || (h as any).totalFamilyGainPercent || 0;
+    if (this.selectedUserId === 'family') {
+      return this.overview?.totalFamilyGainPercent ?? 0;
+    }
+    return this.currentMember?.totalGainPercent ?? 0;
   }
 
-  get principalGainsSegments(): DonutSegment[] {
-    const h = this.headline;
-    if (!h) return [];
-    const gain = Math.max(this.totalGain, 0);
-    const invested = this.totalInvested;
-    return [
-      { value: invested, color: 'var(--steel)' },
-      { value: gain, color: 'var(--gain)' }
-    ];
+  // ── Investor details helpers ──────────────────────────────────
+  relationOf(userId: string): string {
+    return this.relationshipMap.get(userId)?.relationshipType ?? '';
+  }
+  panOf(userId: string): string {
+    return this.relationshipMap.get(userId)?.panNumber ?? userId;
+  }
+  foliosLinkedFor(userId: string): number {
+    return new Set(
+      this.allHoldings
+        .filter(h => h.investorUserId === userId)
+        .map(h => h.folioNumber)
+    ).size;
   }
 
-  periodReturnOf(source: MemberSummaryDto | FamilyOverviewDto | HoldingCardDto | null, key: PeriodKey): QuickReturnDto | null | undefined {
-    if (!source) return null;
-    return (source as any)[key];
+  // ── Scheme filter ─────────────────────────────────────────────
+  get uniqueSchemes(): string[] {
+    return Array.from(new Set(this.schemeCards.map(c => c.schemeName))).sort();
   }
 
-  periodDonutSegments(ret: QuickReturnDto | null | undefined): DonutSegment[] {
-    if (!ret || !ret.hasData) return [{ value: 1, color: '#EAE3D5' }];
-    const color = ret.isPositive ? 'var(--gain)' : 'var(--loss)';
-    const pct = Math.min(Math.abs(ret.returnPercent), 100);
-    return [
-      { value: pct, color },
-      { value: 100 - pct, color: '#EAE3D5' }
-    ];
+  get filteredSchemes(): SchemeCardVm[] {
+    if (this.schemeFilter === 'all') return this.schemeCards;
+    return this.schemeCards.filter(c => c.schemeName === this.schemeFilter);
   }
 
   // ── Scheme card → detail ledger drill-down ────────────────────
-  openSchemeDetail(scheme: HoldingCardDto): void {
+  openSchemeDetail(scheme: SchemeCardVm): void {
     this.selectedScheme = scheme;
     this.showDetailView = true;
-    const investorUserId = this.selectedUserId;
 
-    this.ledgerRows = this.allHoldings.filter(h =>
-      h.investorUserId === investorUserId && h.schemeCode === scheme.schemeCode);
-
-    this.ledgerDateFrom = '';
-    this.ledgerDateTo = '';
+    this.ledgerRows = this.allHoldings.filter(
+      h =>
+        h.schemeCode === scheme.schemeCode &&
+        (this.selectedUserId === 'family' ||
+          h.investorUserId === this.selectedUserId)
+    );
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -341,12 +464,10 @@ export class InvestorComponent implements OnInit, AfterViewInit {
 
   get filteredLedgerRows(): HoldingDto[] {
     let rows = this.ledgerRows;
-    // Use the new dateFrom/dateTo properties from the cover filter
-    if (this.dateFrom) rows = rows.filter(r => r.purchaseDate && r.purchaseDate >= this.dateFrom!);
-    if (this.dateTo) rows = rows.filter(r => r.purchaseDate && r.purchaseDate <= this.dateTo!);
-    // Also support the legacy ledgerDateFrom/ledgerDateTo for backward compatibility
-    if (this.ledgerDateFrom) rows = rows.filter(r => r.purchaseDate && r.purchaseDate >= this.ledgerDateFrom);
-    if (this.ledgerDateTo) rows = rows.filter(r => r.purchaseDate && r.purchaseDate <= this.ledgerDateTo);
+    if (this.dateFrom)
+      rows = rows.filter(r => r.purchaseDate && r.purchaseDate >= this.dateFrom!);
+    if (this.dateTo)
+      rows = rows.filter(r => r.purchaseDate && r.purchaseDate <= this.dateTo!);
     return rows;
   }
 
@@ -360,53 +481,25 @@ export class InvestorComponent implements OnInit, AfterViewInit {
     };
   }
 
-  get uniqueSchemes(): string[] {
-    const schemes = new Set<string>();
-    this.memberHoldings.forEach(h => schemes.add(h.schemeName));
-    return Array.from(schemes).sort();
-  }
-
-  get filteredSchemes(): HoldingCardDto[] {
-    let schemes = this.memberHoldings;
-    // Deduplicate by scheme code to avoid duplicate cards
-    const dedupedMap = new Map<string, HoldingCardDto>();
-    schemes.forEach(s => {
-      if (!dedupedMap.has(s.schemeCode)) {
-        dedupedMap.set(s.schemeCode, s);
-      }
-    });
-    schemes = Array.from(dedupedMap.values());
-
-    if (this.schemeFilter !== 'all') {
-      schemes = schemes.filter(s => s.schemeName === this.schemeFilter);
-    }
-    return schemes;
-  }
-
-  triggerSnapshot(): void {
-    this.isTriggeringSnapshot = true;
-    this.familyService.triggerSnapshot().subscribe({
-      next: (response: any) => {
-        this.isTriggeringSnapshot = false;
-        this.toastr.success('Snapshot triggered successfully');
-        // Reload data after snapshot
-        setTimeout(() => this.loadAll(), 2000);
-      },
-      error: () => {
-        this.isTriggeringSnapshot = false;
-        this.toastr.error('Failed to trigger snapshot');
-      }
-    });
-  }
-
   clearDateRange(): void {
     this.dateFrom = null;
     this.dateTo = null;
   }
 
-  getOwnerName(scheme: HoldingCardDto): string {
-    // Find the member who owns this scheme
-    const member = this.overview?.members.find(m => m.investorUserId === this.selectedUserId);
-    return member?.investorName || 'Unknown';
+  // ── Manual snapshot job trigger ───────────────────────────────
+  triggerSnapshot(): void {
+    if (this.isTriggeringSnapshot) return;
+    this.isTriggeringSnapshot = true;
+    this.familyService.triggerSnapshot().subscribe({
+      next: () => {
+        this.isTriggeringSnapshot = false;
+        this.toastr.success('Snapshot triggered successfully.');
+        this.loadAll();
+      },
+      error: () => {
+        this.isTriggeringSnapshot = false;
+        this.toastr.error('Failed to trigger snapshot.');
+      }
+    });
   }
 }
