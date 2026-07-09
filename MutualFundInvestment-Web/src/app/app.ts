@@ -1,14 +1,32 @@
-import { Component } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
+import { CommonModule } from '@angular/common';
+import { filter, map } from 'rxjs';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { AuthService } from './core/services/auth.service';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
 export class App {
-  // Standalone shell for dev — parent app's sidebar takes over once
-  // this is mounted as a micro-frontend.
+  private authService = inject(AuthService);
+  private router = inject(Router);
+
+  currentUser = this.authService.currentUser;
+
+  isLoginPage = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map(e => e.urlAfterRedirects.startsWith('/login'))
+    ),
+    { initialValue: this.router.url.startsWith('/login') }
+  );
+
+  logout(): void {
+    this.authService.logout();
+  }
 }

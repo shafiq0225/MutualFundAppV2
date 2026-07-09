@@ -7,6 +7,7 @@ import { forkJoin } from 'rxjs';
 import { OrderService } from '../../core/services/order.service';
 import { SchemeService } from '../../core/services/scheme.service';
 import { AuthFamilyService } from '../../core/services/auth-family.service';
+import { AuthUserService } from '../../core/services/auth-user.service';
 import { InvestmentOrderDto, OrderStatus } from '../../core/models/order.model';
 import { SchemeEnrollmentDto } from '../../core/models/scheme.model';
 import { AuthFamilyMemberDto } from '../../core/models/auth-family.model';
@@ -71,6 +72,7 @@ export class OrdersComponent implements OnInit {
     private orderService: OrderService,
     private schemeService: SchemeService,
     private authFamilyService: AuthFamilyService,
+    private authUserService: AuthUserService,
     private fb: FormBuilder,
     private toastr: ToastrService
   ) {}
@@ -101,12 +103,17 @@ export class OrdersComponent implements OnInit {
 
     forkJoin({
       orders: this.orderService.getAll(),
-      schemes: this.schemeService.getApproved()
+      schemes: this.schemeService.getApproved(),
+      investorUsers: this.authUserService.getInvestors()
     }).subscribe({
-      next: ({ orders, schemes }) => {
+      next: ({ orders, schemes, investorUsers }) => {
         this.orders = orders;
         this.schemes = schemes;
-        this.buildInvestorList();
+        this.investors = investorUsers.map(u => ({
+          userId: u.id,
+          fullName: u.fullName,
+          relation: ''
+        }));
         this.loadRelationships();
         this.applyFilters();
         this.loading = false;
@@ -118,18 +125,8 @@ export class OrdersComponent implements OnInit {
     });
   }
 
-  private buildInvestorList(): void {
-    const seen = new Map<string, string>();
-    for (const o of this.orders) {
-      if (!seen.has(o.investorUserId)) seen.set(o.investorUserId, o.investorName);
-    }
-    this.investors = Array.from(seen.entries()).map(([userId, fullName]) => ({
-      userId, fullName, relation: this.relationshipMap.get(userId)?.relationshipType ?? ''
-    }));
-  }
-
   private loadRelationships(): void {
-    const anyUserId = this.orders[0]?.investorUserId;
+    const anyUserId = this.investors[0]?.userId;
     if (!anyUserId) return;
 
     this.authFamilyService.getRelationshipMapForUser(anyUserId).subscribe({
@@ -304,7 +301,6 @@ export class OrdersComponent implements OnInit {
     }).subscribe({
       next: (order) => {
         this.orders = [order, ...this.orders];
-        this.buildInvestorList();
         this.applyFilters();
         this.toastr.success(`Order ${order.orderNumber} logged successfully.`);
         this.submittingOrder = false;
@@ -346,8 +342,9 @@ export class OrdersComponent implements OnInit {
   get nextAction(): StageInfo | null {
     if (!this.selectedOrder) return null;
     const idx = this.stageIndex(this.selectedOrder.status);
-    if (idx < 0 || idx >= STAGES.length) return null;
-    return STAGES[idx];
+    const nextIdx = idx + 1;
+    if (idx < 0 || nextIdx >= STAGES.length) return null;
+    return STAGES[nextIdx];
   }
 
   advanceOrder(): void {
