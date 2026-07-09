@@ -1,0 +1,52 @@
+<div class="wrap">
+  <div class="page-head">
+    <div>
+      <h1 class="display">Login</h1>
+      <p class="sub">Sign in to your account</p>
+    </div>
+  </div>
+
+  <div class="form-card">
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <div class="form-row">
+        <label>Email</label>
+        <input
+          type="email"
+          formControlName="email"
+          placeholder="Enter your email"
+          [class.is-invalid]="loginForm.get('email')?.touched && loginForm.get('email')?.invalid"
+        />
+        <div class="error-text" *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.errors?.['required']">
+          Email is required
+        </div>
+        <div class="error-text" *ngIf="loginForm.get('email')?.touched && loginForm.get('email')?.errors?.['email']">
+          Please enter a valid email
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label>Password</label>
+        <input
+          type="password"
+          formControlName="password"
+          placeholder="Enter your password"
+          [class.is-invalid]="loginForm.get('password')?.touched && loginForm.get('password')?.invalid"
+        />
+        <div class="error-text" *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.errors?.['required']">
+          Password is required
+        </div>
+        <div class="error-text" *ngIf="loginForm.get('password')?.touched && loginForm.get('password')?.errors?.['minlength']">
+          Password must be at least 6 characters
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn-primary" [disabled]="isLoading || loginForm.invalid">
+          <span *ngIf="!isLoading">Sign In</span>
+          <span *ngIf="isLoading">Signing in...</span>
+        </button>
+        <button type="button" class="link-btn" (click)="goToRegister()" [disabled]="isLoading">Create an account</button>
+      </div>
+    </form>
+  </div>
+</div>

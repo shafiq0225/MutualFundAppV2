@@ -13,13 +13,25 @@
 .standalone-nav {
   display: flex;
   gap: 18px;
+  align-items: center;
 
   a {
     color: #B9C3DD;
     text-decoration: none;
     font-size: 13px;
     font-weight: 500;
+    cursor: pointer;
 
     &.active { color: var(--gold); }
   }
+}
+
+.nav-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.logout-link {
+  color: var(--gold) !important;
 }
