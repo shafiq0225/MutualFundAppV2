@@ -1,166 +1,191 @@
 <app-loading-spinner *ngIf="loading" message="Loading portfolio..."></app-loading-spinner>
 
-<div class="wrap" *ngIf="!loading && overview">
+<!-- ===== HEADER / PASSBOOK COVER ===== -->
+<div class="cover" *ngIf="!loading && overview">
+  <div class="cover-inner">
+    <div class="eyebrow">Portfolio Passbook — Updated {{ overview.reportDate | date:'dd MMM yyyy' }}</div>
 
-  <div class="page-head">
-    <h1 class="display">Family Passbook</h1>
-    <select class="member-select" [ngModel]="selectedUserId" (ngModelChange)="selectMember($event)">
-      <option value="family">Family (All Members)</option>
-      <option *ngFor="let m of overview.members" [value]="m.userId">
-        {{ m.fullName }}<ng-container *ngIf="relationOf(m.userId)"> ({{ relationOf(m.userId) }})</ng-container>
-      </option>
-    </select>
-  </div>
-
-  <!-- ── Investor Details Card (only when a specific member selected) ── -->
-  <div class="investor-card" *ngIf="currentMember as cm">
-    <div class="ic-row">
-      <div class="ic-item">
-        <span>Primary Holder</span>
-        <strong>{{ cm.fullName }}</strong>
+    <div class="cover-selects-row">
+      <div class="investor-select-wrap">
+        <select class="investor-select" [ngModel]="selectedUserId" (ngModelChange)="selectMember($event)">
+          <option value="family">{{ overview.members.length > 0 ? overview.members[0].investorName + ' & Family Members' : 'Family Members' }}</option>
+          <option *ngFor="let m of overview.members" [value]="m.investorUserId">
+            {{ m.investorName }}
+          </option>
+        </select>
       </div>
-      <div class="ic-item">
-        <span>PAN</span>
-        <strong class="num">{{ panOf(cm.userId) }}</strong>
+      <div>
+        <div class="filter-label">Scheme</div>
+        <div class="scheme-filter-wrap">
+          <select class="scheme-filter" [ngModel]="schemeFilter" (ngModelChange)="schemeFilter = $event">
+            <option value="all">All schemes</option>
+            <option *ngFor="let scheme of uniqueSchemes" [value]="scheme">{{ scheme }}</option>
+          </select>
+        </div>
       </div>
-      <div class="ic-item">
-        <span>Folios Linked</span>
-        <strong class="num">{{ foliosLinkedFor(cm.userId) }}</strong>
-      </div>
-      <div class="ic-item" *ngIf="memberSinceOf(cm.userId) as since">
-        <span>Member Since</span>
-        <strong>{{ since | date:'MMM yyyy' }}</strong>
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Summary Donuts ─────────────────────────────────────── -->
-  <div class="summary-grid" *ngIf="headline as h">
-    <div class="summary-card">
-      <h3>Principal vs Gains</h3>
-      <div class="donut-row">
-        <app-donut-chart [segments]="principalGainsSegments" [size]="120" [thickness]="16">
-          <span class="donut-center-value num">₹{{ h.currentValue | number:'1.0-0' }}</span>
-        </app-donut-chart>
-        <div class="donut-legend">
-          <div><span class="dot" style="background:var(--steel)"></span> Principal: ₹{{ h.totalInvested | number:'1.0-0' }}</div>
-          <div><span class="dot" style="background:var(--gain)"></span> Gains: ₹{{ h.profitLoss | number:'1.0-0' }}</div>
-          <div class="pnl-pct" [class.loss]="h.profitLoss < 0">{{ h.profitLossPercent | number:'1.2-2' }}%</div>
+      <div>
+        <div class="filter-label">Order Date Range</div>
+        <div class="date-range-wrap">
+          <input type="date" class="date-filter" [ngModel]="dateFrom" (ngModelChange)="dateFrom = $event">
+          <span class="date-range-sep">to</span>
+          <input type="date" class="date-filter" [ngModel]="dateTo" (ngModelChange)="dateTo = $event">
+          <button type="button" class="date-range-clear" (click)="clearDateRange()">Clear</button>
         </div>
       </div>
     </div>
 
-    <div class="summary-card">
-      <h3>Returns by Period</h3>
-      <div class="period-donuts">
-        <div class="period-donut" *ngFor="let p of periods">
-          <app-donut-chart [segments]="periodDonutSegments(periodReturnOf(h, p.key))" [size]="64" [thickness]="8">
-            <span class="period-pct num"
-                  [class.loss]="periodReturnOf(h, p.key) && !periodReturnOf(h, p.key)!.isPositive">
-              {{ periodReturnOf(h, p.key)?.hasData ? ((periodReturnOf(h, p.key)!.returnPercent | number:'1.1-1') + '%') : '—' }}
-            </span>
-          </app-donut-chart>
-          <span class="period-label">{{ p.label }}</span>
+    <div class="cover-grid">
+      <div class="stat-grid">
+        <div><div class="stat-label">Total Invested</div><div class="stat-value num">₹{{ totalInvested | number:'1.0-0' }}</div></div>
+        <div><div class="stat-label">Current Value</div><div class="stat-value num">₹{{ currentValue | number:'1.0-0' }}</div></div>
+        <div><div class="stat-label">Profit / Loss</div><div class="stat-value num" [class.gain]="totalGain >= 0" [class.loss]="totalGain < 0">{{ totalGain >= 0 ? '+' : '' }}₹{{ totalGain | number:'1.0-0' }}</div></div>
+        <div><div class="stat-label">Overall Change</div><div class="stat-value num" [class.gain]="totalGain >= 0" [class.loss]="totalGain < 0">{{ totalGainPercent >= 0 ? '+' : '' }}{{ totalGainPercent | number:'1.2-2' }}% <span class="pill" [class.gain]="totalGain >= 0" [class.loss]="totalGain < 0">{{ totalGain >= 0 ? '▲ Growth' : '▼ Decline' }}</span></div></div>
+      </div>
+
+      <div class="donuts-row">
+        <div class="donut-panel">
+          <svg id="returnsDonut" width="100" height="100" viewBox="0 0 100 100"></svg>
+          <div>
+            <div class="donut-panel-title">Returns by Period</div>
+            <div class="donut-legend" id="returnsLegend"></div>
+          </div>
+        </div>
+        <div class="donut-panel">
+          <svg id="pnlDonut" width="100" height="100" viewBox="0 0 100 100"></svg>
+          <div>
+            <div class="donut-panel-title">P&amp;L by Period</div>
+            <div class="donut-legend" id="pnlLegend"></div>
+          </div>
         </div>
       </div>
     </div>
-  </div>
-
-  <!-- ── Family Member List (aggregate view only) ──────────────── -->
-  <div class="family-list" *ngIf="selectedUserId === 'family'">
-    <div class="fam-card" *ngFor="let m of overview.members" (click)="selectMember(m.userId)">
-      <div class="fam-name">{{ m.fullName }}</div>
-      <div class="fam-rel" *ngIf="relationOf(m.userId)">{{ relationOf(m.userId) }}</div>
-      <div class="fam-value num">₹{{ m.currentValue | number:'1.0-0' }}</div>
-      <div class="fam-pnl num" [class.loss]="m.profitLoss < 0">
-        {{ m.profitLoss >= 0 ? '+' : '' }}{{ m.profitLossPercent | number:'1.2-2' }}%
-      </div>
-    </div>
-  </div>
-
-  <!-- ── Scheme Cards (member view only) ───────────────────────── -->
-  <app-loading-spinner *ngIf="loadingMemberDetail" message="Loading holdings..."></app-loading-spinner>
-
-  <div class="scheme-grid" *ngIf="selectedUserId !== 'family' && !loadingMemberDetail">
-    <div class="scheme-card-lg" *ngFor="let s of memberHoldings" (click)="openSchemeDetail(s)">
-      <div class="scl-header">
-        <div>
-          <div class="scl-name">{{ s.schemeName }}</div>
-          <div class="scl-fund">{{ s.fundName }}</div>
-        </div>
-        <app-donut-chart [segments]="[
-          { value: s.totalInvested, color: 'var(--steel)' },
-          { value: (s.profitLoss > 0 ? s.profitLoss : 0), color: 'var(--gain)' }
-        ]" [size]="56" [thickness]="8"></app-donut-chart>
-      </div>
-      <div class="scl-stats">
-        <div><span>Invested</span><strong class="num">₹{{ s.totalInvested | number:'1.0-0' }}</strong></div>
-        <div><span>Current</span><strong class="num">₹{{ s.currentValue | number:'1.0-0' }}</strong></div>
-        <div><span>P&amp;L</span><strong class="num" [class.loss]="s.profitLoss < 0">
-          {{ s.profitLoss >= 0 ? '+' : '' }}{{ s.profitLossPercent | number:'1.2-2' }}%
-        </strong></div>
-      </div>
-    </div>
-    <div class="empty-note" *ngIf="!memberHoldings.length">No holdings for this member yet.</div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════
-     Scheme Detail — raw transaction ledger
-     ══════════════════════════════════════════════════════════ -->
-<div class="drawer-overlay" *ngIf="selectedScheme" (click)="closeSchemeDetail()">
-  <div class="drawer" (click)="$event.stopPropagation()">
-    <div class="drawer-header">
-      <div>
-        <h3 class="display">{{ selectedScheme.schemeName }}</h3>
-        <p class="sub">{{ selectedScheme.fundName }}</p>
+<div class="wrap" *ngIf="!loading && overview">
+
+  <!-- ===================== DASHBOARD VIEW ===================== -->
+  <div class="dashboard-view" [class.hidden]="showDetailView">
+
+    <div class="section">
+      <div class="section-head">
+        <h2 class="section-title">Investor Details</h2>
+        <span class="section-sub">Primary holder &amp; family members on this portfolio</span>
       </div>
-      <button class="icon-btn" (click)="closeSchemeDetail()"><i class="fas fa-times"></i></button>
+      <div class="investor-card" *ngIf="currentMember as cm">
+        <div class="id-row">
+          <div>Primary Holder <b>{{ cm.investorName }}</b></div>
+          <div>PAN <b class="num">{{ panOf(cm.investorUserId) }}</b></div>
+          <div>Folios Linked <b class="num">{{ foliosLinkedFor(cm.investorUserId) }}</b></div>
+        </div>
+      </div>
+
+      <div class="family-list" *ngIf="selectedUserId === 'family'">
+        <div class="family-card" *ngFor="let m of overview.members" (click)="selectMember(m.investorUserId)">
+          <div class="fam-name">{{ m.investorName }} <span class="fam-rel" *ngIf="relationOf(m.investorUserId)">{{ relationOf(m.investorUserId) }}</span></div>
+          <div><div class="cell-label">Invested</div><div class="cell-value num">₹{{ m.totalInvested | number:'1.0-0' }}</div></div>
+          <div><div class="cell-label">Current</div><div class="cell-value num">₹{{ m.totalCurrentValue | number:'1.0-0' }}</div></div>
+          <div><div class="cell-label">P&amp;L</div><div class="cell-value num" [style.color]="m.totalGain >= 0 ? 'var(--gain)' : 'var(--loss)'">{{ m.totalGain >= 0 ? '+' : '' }}₹{{ m.totalGain | number:'1.0-0' }}</div></div>
+          <div><div class="cell-label">Change</div><div class="cell-value num" [style.color]="m.totalGain >= 0 ? 'var(--gain)' : 'var(--loss)'">{{ m.totalGainPercent >= 0 ? '+' : '' }}{{ m.totalGainPercent | number:'1.2-2' }}%</div></div>
+        </div>
+      </div>
     </div>
 
-    <div class="drawer-body">
-      <div class="ledger-filter">
-        <input type="date" [(ngModel)]="ledgerDateFrom" />
-        <span>to</span>
-        <input type="date" [(ngModel)]="ledgerDateTo" />
+    <div class="section">
+      <div class="section-head">
+        <h2 class="section-title">Schemes</h2>
+        <span class="section-sub">Tap a scheme to view the full transaction ledger</span>
       </div>
-
-      <div class="ledger-totals">
-        <div><span>Invested</span><strong class="num">₹{{ ledgerTotals.invested | number:'1.0-0' }}</strong></div>
-        <div><span>Current</span><strong class="num">₹{{ ledgerTotals.currentValue | number:'1.0-0' }}</strong></div>
-        <div><span>Units</span><strong class="num">{{ ledgerTotals.units | number:'1.4-4' }}</strong></div>
-        <div><span>P&amp;L</span><strong class="num" [class.loss]="ledgerTotals.pnl < 0">₹{{ ledgerTotals.pnl | number:'1.0-0' }}</strong></div>
+      <div class="scheme-grid">
+        <div class="scheme-card" *ngFor="let s of filteredSchemes" (click)="openSchemeDetail(s)" tabindex="0">
+          <div class="scheme-top">
+            <div class="scheme-name">{{ s.schemeName }}<span class="scheme-plan">{{ s.fundName }}</span><span class="scheme-owner" *ngIf="selectedUserId === 'family'">{{ getOwnerName(s) }}</span></div>
+          </div>
+          <div class="scheme-body">
+            <div class="scheme-stats">
+              <div><div class="cell-label">Invested</div><div class="cell-value num">₹{{ s.investedAmount | number:'1.0-0' }}</div></div>
+              <div><div class="cell-label">Current</div><div class="cell-value num">₹{{ s.currentValue | number:'1.0-0' }}</div></div>
+              <div><div class="cell-label">P&amp;L</div><div class="cell-value num" [style.color]="s.gain >= 0 ? 'var(--gain)' : 'var(--loss)'">{{ s.gain >= 0 ? '+' : '' }}₹{{ s.gain | number:'1.0-0' }}</div></div>
+              <div><div class="cell-label">Change</div>
+                <span class="scheme-stamp" [class.gain]="s.gain >= 0" [class.loss]="s.gain < 0">{{ s.gain >= 0 ? '▲' : '▼' }} {{ s.gainPercent >= 0 ? '+' : '' }}{{ s.gainPercent | number:'1.2-2' }}%</span>
+              </div>
+            </div>
+          </div>
+          <div class="scheme-donuts">
+            <div class="scheme-donut-panel">
+              <svg [id]="'ret-donut-' + s.holdingId" width="60" height="60" viewBox="0 0 60 60"></svg>
+              <div>
+                <div class="scheme-donut-title">Returns by Period</div>
+                <div class="scheme-donut-legend" [id]="'ret-legend-' + s.holdingId"></div>
+              </div>
+            </div>
+            <div class="scheme-donut-panel">
+              <svg [id]="'pnl-donut-' + s.holdingId" width="60" height="60" viewBox="0 0 60 60"></svg>
+              <div>
+                <div class="scheme-donut-title">P&amp;L by Period</div>
+                <div class="scheme-donut-legend" [id]="'pnl-legend-' + s.holdingId"></div>
+              </div>
+            </div>
+          </div>
+          <div class="view-hint">View full ledger →</div>
+        </div>
+        <div class="empty-note" *ngIf="!filteredSchemes.length">No schemes held by this member yet.</div>
       </div>
+    </div>
 
-      <table class="ledger-table">
+  </div>
+
+  <!-- ===================== DETAIL VIEW ===================== -->
+  <div class="detail-view" [class.active]="showDetailView">
+    <button class="back-btn" (click)="closeSchemeDetail()">← Back to portfolio</button>
+
+    <div class="detail-header" *ngIf="selectedScheme">
+      <div>
+        <h2 class="detail-title">{{ selectedScheme.schemeName }}</h2>
+        <div class="detail-plan">{{ selectedScheme.fundName }}</div>
+      </div>
+      <div class="detail-summary">
+        <div><div class="cell-label">Invested</div><div class="cell-value num">₹{{ selectedScheme.investedAmount | number:'1.0-0' }}</div></div>
+        <div><div class="cell-label">Current</div><div class="cell-value num">₹{{ selectedScheme.currentValue | number:'1.0-0' }}</div></div>
+        <div><div class="cell-label">P&amp;L</div><div class="cell-value num" [style.color]="selectedScheme.gain >= 0 ? 'var(--gain)' : 'var(--loss)'">{{ selectedScheme.gain >= 0 ? '+' : '' }}₹{{ selectedScheme.gain | number:'1.0-0' }}</div></div>
+        <div><div class="cell-label">Change</div><div class="cell-value num" [style.color]="selectedScheme.gain >= 0 ? 'var(--gain)' : 'var(--loss)'">{{ selectedScheme.gainPercent >= 0 ? '+' : '' }}{{ selectedScheme.gainPercent | number:'1.2-2' }}%</div></div>
+      </div>
+    </div>
+
+    <div class="ledger-table-wrap" *ngIf="selectedScheme">
+      <table class="ledger">
         <thead>
           <tr>
-            <th>Date</th>
-            <th class="num">Invested</th>
-            <th class="num">NAV (Buy)</th>
-            <th class="num">Units</th>
-            <th class="num">NAV (Now)</th>
-            <th class="num">Value</th>
-            <th class="num">P&amp;L</th>
+            <th>Date</th><th>Year</th><th>Invested (₹)</th><th>Purchase NAV</th>
+            <th>Units</th><th>Current NAV</th><th>Current Value (₹)</th>
+            <th>P&amp;L (₹)</th><th>%</th>
           </tr>
         </thead>
         <tbody>
-          <tr *ngFor="let row of filteredLedgerRows">
-            <td>{{ row.purchaseDate | date:'dd MMM yy' }}</td>
-            <td class="num">₹{{ row.investedAmount | number:'1.0-0' }}</td>
-            <td class="num">₹{{ row.purchaseNAV | number:'1.4-4' }}</td>
-            <td class="num">{{ row.units | number:'1.4-4' }}</td>
-            <td class="num">₹{{ row.currentNAV | number:'1.4-4' }}</td>
-            <td class="num">₹{{ row.currentValue | number:'1.0-0' }}</td>
-            <td class="num" [class.loss]="!row.isProfit">
-              {{ row.isProfit ? '+' : '' }}{{ row.profitLossPercent | number:'1.2-2' }}%
-            </td>
-          </tr>
-          <tr *ngIf="!filteredLedgerRows.length">
-            <td colspan="7" class="empty-row">No transactions in this range.</td>
+          <tr *ngFor="let r of filteredLedgerRows">
+            <td>{{ r.purchaseDate | date:'dd MMM yyyy' }}</td>
+            <td>{{ r.purchaseYear }}</td>
+            <td>{{ r.investedAmount | number:'1.2-2' }}</td>
+            <td>{{ r.purchaseNAV | number:'1.4-4' }}</td>
+            <td>{{ r.units | number:'1.3-3' }}</td>
+            <td>{{ r.currentNAV | number:'1.4-4' }}</td>
+            <td>{{ r.currentValue | number:'1.2-2' }}</td>
+            <td [class.gain-text]="r.profitLoss >= 0" [class.loss-text]="r.profitLoss < 0">{{ r.profitLoss >= 0 ? '+' : '' }}{{ r.profitLoss | number:'1.2-2' }}</td>
+            <td [class.gain-text]="r.profitLoss >= 0" [class.loss-text]="r.profitLoss < 0">{{ r.profitLossPercent >= 0 ? '+' : '' }}{{ r.profitLossPercent | number:'1.2-2' }}%</td>
           </tr>
         </tbody>
+        <tfoot *ngIf="filteredLedgerRows.length">
+          <tr>
+            <td>Total</td><td></td>
+            <td>{{ ledgerTotals.invested | number:'1.2-2' }}</td><td></td><td></td><td></td>
+            <td>{{ ledgerTotals.currentValue | number:'1.2-2' }}</td>
+            <td [class.gain-text]="ledgerTotals.pnl >= 0" [class.loss-text]="ledgerTotals.pnl < 0">{{ ledgerTotals.pnl >= 0 ? '+' : '' }}{{ ledgerTotals.pnl | number:'1.2-2' }}</td>
+            <td [class.gain-text]="ledgerTotals.pnl >= 0" [class.loss-text]="ledgerTotals.pnl < 0">{{ (ledgerTotals.pnl / ledgerTotals.invested * 100) | number:'1.2-2' }}%</td>
+          </tr>
+        </tfoot>
       </table>
+      <div class="empty-row" *ngIf="!filteredLedgerRows.length">No transactions in this date range.</div>
     </div>
   </div>
+
 </div>

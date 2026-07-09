@@ -9,13 +9,15 @@ export interface QuickReturnDto {
 }
 
 export interface MemberSummaryDto {
-  userId: string;
-  fullName: string;
+  investorUserId: string;
+  investorName: string;
   totalInvested: number;
-  currentValue: number;
-  profitLoss: number;
-  profitLossPercent: number;
-  holdingsCount: number;
+  totalCurrentValue: number;
+  totalGain: number;
+  totalGainPercent: number;
+  isGain: boolean;
+  schemeCount: number;
+  holdingCount: number;
   dayBefore?: QuickReturnDto | null;
   yesterday?: QuickReturnDto | null;
   thisWeek?: QuickReturnDto | null;
@@ -26,23 +28,36 @@ export interface MemberSummaryDto {
 }
 
 export interface FamilyOverviewDto {
-  totalInvested: number;
-  currentValue: number;
-  profitLoss: number;
-  profitLossPercent: number;
+  totalFamilyInvested: number;
+  totalFamilyCurrentValue: number;
+  totalFamilyGain: number;
+  totalFamilyGainPercent: number;
+  isFamilyGain: boolean;
+  totalMembers: number;
+  totalSchemes: number;
+  equitySchemeCount: number;
+  debtSchemeCount: number;
+  hybridSchemeCount: number;
+  familyYesterdayReturn?: QuickReturnDto | null;
+  reportDate: Date;
   members: MemberSummaryDto[];
 }
 
 export interface HoldingCardDto {
+  holdingId: number;
   schemeCode: string;
   schemeName: string;
   fundName: string;
-  totalInvested: number;
-  currentValue: number;
-  profitLoss: number;
-  profitLossPercent: number;
+  folioNumber: string;
+  orderNumber: string;
+  investedAmount: number;
   units: number;
+  purchaseNAV: number;
   currentNAV: number;
+  currentValue: number;
+  gain: number;
+  gainPercent: number;
+  isGain: boolean;
   dayBefore?: QuickReturnDto | null;
   yesterday?: QuickReturnDto | null;
   thisWeek?: QuickReturnDto | null;
@@ -54,11 +69,13 @@ export interface HoldingCardDto {
 }
 
 export interface MemberHoldingsDto {
-  userId: string;
-  fullName: string;
+  investorUserId: string;
+  investorName: string;
+  initials: string;
   totalInvested: number;
-  currentValue: number;
-  profitLoss: number;
-  profitLossPercent: number;
+  totalCurrentValue: number;
+  totalGain: number;
+  totalGainPercent: number;
+  isGain: boolean;
   holdings: HoldingCardDto[];
 }

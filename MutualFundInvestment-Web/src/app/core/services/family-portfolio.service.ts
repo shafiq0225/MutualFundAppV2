@@ -7,6 +7,7 @@ import { FamilyOverviewDto, MemberHoldingsDto } from '../models/family-portfolio
 @Injectable({ providedIn: 'root' })
 export class FamilyPortfolioService {
   private readonly api = `${environment.investmentApiUrl}/api/familyportfolio`;
+  private readonly jobsApi = `${environment.investmentApiUrl}/api/jobs`;
 
   constructor(private http: HttpClient) {}
 
@@ -16,5 +17,10 @@ export class FamilyPortfolioService {
 
   getMemberHoldings(userId: string): Observable<MemberHoldingsDto> {
     return this.http.get<MemberHoldingsDto>(`${this.api}/${userId}`);
+  }
+
+  triggerSnapshot(date?: Date): Observable<any> {
+    const params = date ? `?date=${date.toISOString()}` : '';
+    return this.http.post(`${this.jobsApi}/snapshot${params}`, {});
   }
 }
