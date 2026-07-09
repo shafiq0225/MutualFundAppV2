@@ -6,14 +6,21 @@
 
   &-primary {
     background: $primary;
-    color: #fff;
-    &:hover:not(:disabled) { background: $primary-dark; }
+    color: #F3EEDF;
+    &:hover:not(:disabled) { background: $primary-hover; }
   }
 
   &-accent {
     background: $accent;
     color: #fff;
-    &:hover:not(:disabled) { background: #12876f; }
+    &:hover:not(:disabled) { background: #245a4f; }
+  }
+
+  &-gold {
+    background: transparent;
+    color: $primary;
+    border: 1.5px solid $gold;
+    &:hover:not(:disabled) { background: rgba($gold, 0.14); }
   }
 
   &-danger {

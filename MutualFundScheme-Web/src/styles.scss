@@ -7,12 +7,32 @@
 @use 'ngx-toastr/toastr';
 @use '@fortawesome/fontawesome-free/css/all.min.css';
 
+// ── Passbook design tokens (mirror MutualFundInvestment-Web) ──────
+:root {
+  --ink: #1B2A4A;
+  --ink-soft: #324268;
+  --parchment: #FAF6EC;
+  --paper: #FFFFFF;
+  --gain: #2F6F62;
+  --gain-soft: #E4EFEA;
+  --loss: #9C3B26;
+  --loss-soft: #F3E4DE;
+  --gold: #C08A2E;
+  --gold-soft: #F6ECD8;
+  --steel: #5C6EA8;
+  --steel-soft: #E7EAF4;
+  --line: #DCD3C1;
+  --line-soft: #EAE3D5;
+  --text-muted: #6B6455;
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
   height: 100%;
   background: $page-bg;
   overflow-x: hidden;
+  font-family: $font-family;
 }
 
 a { text-decoration: none; color: $primary-light; }
@@ -56,25 +76,45 @@ a { text-decoration: none; color: $primary-light; }
   &-sm { padding: 16px; }
 }
 
-// ── Page Header ───────────────────────────────────────────────────
+// ── Page Header (passbook cover band) ─────────────────────────────
 .page-header {
+  position: relative;
+  overflow: hidden;
+  background: $primary;
+  color: #F3EEDF;
+  border-radius: $card-radius;
+  padding: 24px 26px 30px;
   margin-bottom: 24px;
 
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 10px;
+    background-image: radial-gradient(circle, $page-bg 4px, transparent 4.5px);
+    background-size: 20px 20px;
+    background-position: 6px 0;
+  }
+
   h2 {
-    font-size: $font-size-xl;
-    color: $primary;
-    margin-bottom: 4px;
+    font-family: $font-display;
+    font-size: $font-size-2xl;
+    color: #F3EEDF;
+    margin-bottom: 6px;
   }
 
   p {
     font-size: $font-size-sm;
-    color: $text-muted;
+    color: #B9C3DD;
     margin: 0;
   }
 
   @media (max-width: 576px) {
     margin-bottom: 16px;
-    h2 { font-size: $font-size-lg; }
+    padding: 18px 18px 24px;
+    h2 { font-size: $font-size-xl; }
   }
 }
 

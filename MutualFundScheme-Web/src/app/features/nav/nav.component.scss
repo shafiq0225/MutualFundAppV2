@@ -1,17 +1,17 @@
 @use "../../../styles/variables" as *;
 @use "../../../styles/mixins" as *;
 
-// ── Page Header ───────────────────────────────────────────────────
+// ── Page Header (cover styling comes from global .page-header) ─────
 .page-header {
-  margin-bottom: 24px;
   h2 {
-    font-size: $font-size-xl;
-    color: $primary;
-    margin-bottom: 4px;
+    font-family: $font-display;
+    font-size: $font-size-2xl;
+    color: #F3EEDF;
+    margin-bottom: 6px;
   }
   p {
     font-size: $font-size-sm;
-    color: $text-muted;
+    color: #B9C3DD;
     margin: 0;
   }
 }
@@ -311,7 +311,7 @@
 }
 
 .scheme-code {
-  font-family: "Courier New", monospace;
+  font-family: $font-mono;
   font-size: 11px;
   color: $primary-light;
   background: rgba($primary, 0.06);
@@ -329,7 +329,7 @@
 }
 
 .nav-value {
-  font-family: "Courier New", monospace;
+  font-family: $font-mono;
   font-size: $font-size-sm;
   font-weight: 700;
   color: $text-primary;
@@ -676,7 +676,7 @@
 }
 
 .scheme-code {
-  font-family: "Courier New", monospace;
+  font-family: $font-mono;
   font-size: 11px;
   color: $primary-light;
   background: rgba($primary, 0.06);
@@ -694,7 +694,7 @@
 }
 
 .nav-value {
-  font-family: "Courier New", monospace;
+  font-family: $font-mono;
   font-size: $font-size-sm;
   font-weight: 700;
   color: $text-primary;
@@ -973,7 +973,7 @@
 }
 
 .tile-value {
-  font-family: "Courier New", monospace;
+  font-family: $font-mono;
   font-size: $font-size-sm;
   font-weight: 700;
   color: $text-primary;
@@ -992,7 +992,7 @@
 }
 
 .acc-scheme-code {
-  font-family: "Courier New", monospace;
+  font-family: $font-mono;
   font-size: 11px;
   color: $primary-light;
   background: rgba($primary, 0.06);
