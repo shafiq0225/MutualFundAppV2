@@ -1,14 +1,33 @@
+// ── Passbook design tokens (mirror MutualFundInvestment-Web) ──────
+:root {
+  --ink: #1B2A4A;
+  --ink-soft: #324268;
+  --parchment: #FAF6EC;
+  --paper: #FFFFFF;
+  --gain: #2F6F62;
+  --gain-soft: #E4EFEA;
+  --loss: #9C3B26;
+  --loss-soft: #F3E4DE;
+  --gold: #C08A2E;
+  --gold-soft: #F6ECD8;
+  --steel: #5C6EA8;
+  --steel-soft: #E7EAF4;
+  --line: #DCD3C1;
+  --line-soft: #EAE3D5;
+  --text-muted: #6B6455;
+}
+
 *, *::before, *::after { box-sizing: border-box; }
 
 html, body {
   margin: 0; padding: 0; height: 100%;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 14px; line-height: 1.5; color: #334155;
-  background: #f1f5f9;
+  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 14px; line-height: 1.5; color: #2A2A2A;
+  background: var(--parchment);
 }
 
-a { color: #1d4ed8; }
+a { color: var(--steel); }
 
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
