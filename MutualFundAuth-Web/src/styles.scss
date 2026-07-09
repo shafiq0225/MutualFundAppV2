@@ -1,0 +1,181 @@
+@use '@fortawesome/fontawesome-free/css/all.min.css';
+@use 'ngx-toastr/toastr';
+
+:root {
+  --ink: #1B2A4A;
+  --ink-soft: #324268;
+  --parchment: #FAF6EC;
+  --paper: #FFFFFF;
+  --gain: #2F6F62;
+  --gain-soft: #E4EFEA;
+  --loss: #9C3B26;
+  --loss-soft: #F3E4DE;
+  --gold: #C08A2E;
+  --gold-soft: #F6ECD8;
+  --steel: #5C6EA8;
+  --steel-soft: #E7EAF4;
+  --line: #DCD3C1;
+  --line-soft: #EAE3D5;
+  --text-muted: #6B6455;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--parchment);
+  font-family: 'IBM Plex Sans', sans-serif;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.display {
+  font-family: 'Fraunces', serif;
+}
+
+.wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 20px 80px;
+}
+
+a { color: inherit; }
+
+// ══════════════════════════════════════════════════════════════
+// Shared "passbook" component chrome — reused across Users,
+// Pending, and Family feature components to avoid triplicating
+// the same CSS in each component's scoped stylesheet.
+// ══════════════════════════════════════════════════════════════
+
+.page-head {
+  display: flex; justify-content: space-between; align-items: flex-end;
+  padding: 28px 0 18px; flex-wrap: wrap; gap: 14px;
+
+  h1 { font-size: 26px; margin: 0 0 4px; font-weight: 600; }
+  .sub { font-size: 13px; color: var(--text-muted); margin: 0; }
+}
+
+.stat-strip {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+  margin-bottom: 22px;
+
+  @media (max-width: 700px) { grid-template-columns: 1fr 1fr; }
+}
+
+.stat-card {
+  background: var(--paper); border: 1px solid var(--line-soft); border-radius: 8px;
+  padding: 14px 16px;
+
+  .stat-label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); margin-bottom: 6px; }
+  .stat-value { font-size: 20px; font-weight: 600; }
+}
+
+.filter-bar {
+  display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 20px;
+
+  input, select {
+    padding: 8px 12px; border: 1px solid var(--line); border-radius: 20px;
+    font-family: 'IBM Plex Sans', sans-serif; font-size: 13px; background: var(--paper); color: var(--ink);
+  }
+  input { flex: 1; min-width: 200px; }
+}
+
+.btn-primary {
+  background: var(--ink); color: #F3EEDF; border: none; border-radius: 24px;
+  padding: 10px 20px; font-size: 13.5px; font-weight: 600; cursor: pointer;
+
+  &:hover { background: #243a63; }
+  &:disabled { opacity: .5; cursor: not-allowed; }
+}
+
+.btn-ghost {
+  background: none; border: 1px solid var(--line); color: var(--text-muted); border-radius: 20px;
+  padding: 8px 16px; font-size: 13px; font-weight: 600; cursor: pointer;
+
+  &:hover { border-color: var(--ink); color: var(--ink); }
+}
+
+.icon-btn {
+  background: none; border: 1px solid var(--line); border-radius: 6px; width: 30px; height: 30px;
+  cursor: pointer; color: var(--text-muted); font-size: 13px; display: inline-flex;
+  align-items: center; justify-content: center; margin-left: 4px;
+
+  &:hover { border-color: var(--ink); color: var(--ink); background: var(--paper); }
+}
+
+.link-btn {
+  background: none; border: none; color: var(--steel); font-size: 12.5px; text-decoration: underline;
+  cursor: pointer; padding: 0;
+}
+
+.table-wrap {
+  background: var(--paper); border: 1px solid var(--line-soft); border-radius: 6px; overflow-x: auto;
+}
+
+table {
+  width: 100%; border-collapse: collapse; font-size: 13px;
+
+  thead th {
+    background: var(--ink); color: #E8E3D3; text-align: left; font-weight: 500; padding: 11px 14px;
+    font-size: 11px; text-transform: uppercase; letter-spacing: .06em; white-space: nowrap;
+  }
+  tbody td { padding: 10px 14px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+  tbody tr:nth-child(even) { background: #FCFAF3; }
+  tbody tr:hover { background: var(--gain-soft); }
+}
+
+.row-actions { white-space: nowrap; text-align: right; }
+.muted-sm { font-size: 12px; color: var(--text-muted); }
+.empty-row, .empty-note { padding: 26px; text-align: center; font-size: 13px; color: var(--text-muted); }
+
+.badge {
+  display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .02em; padding: 3px 10px;
+  border-radius: 20px; border: 1.5px dashed; text-transform: uppercase;
+
+  &.badge-ink    { color: var(--ink);   border-color: var(--ink);   background: var(--steel-soft); }
+  &.badge-steel  { color: var(--steel); border-color: var(--steel); background: var(--steel-soft); }
+  &.badge-muted  { color: var(--text-muted); border-color: var(--line); background: var(--line-soft); }
+  &.badge-gain   { color: var(--gain); border-color: var(--gain); background: var(--gain-soft); }
+  &.badge-gold   { color: var(--gold); border-color: var(--gold); background: var(--gold-soft); }
+  &.badge-loss   { color: var(--loss); border-color: var(--loss); background: var(--loss-soft); }
+}
+
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(27, 42, 74, 0.35); display: flex;
+  align-items: center; justify-content: center; z-index: 50;
+}
+
+.modal {
+  width: 480px; max-width: 92vw; max-height: 88vh; overflow-y: auto; background: var(--paper);
+  border-radius: 10px; padding: 22px 26px 26px; box-shadow: 0 12px 40px rgba(27, 42, 74, 0.2);
+}
+
+.modal-header {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;
+  h3 { margin: 0; font-size: 19px; }
+}
+
+.modal-body { padding: 14px 0; }
+.modal-footer { display: flex; justify-content: flex-end; gap: 10px; padding-top: 8px; border-top: 1px solid var(--line-soft); }
+
+.form-row {
+  margin-bottom: 14px;
+
+  label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 5px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+  input, select, textarea {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: 5px;
+    font-family: 'IBM Plex Sans', sans-serif; font-size: 13.5px; background: var(--paper); color: var(--ink);
+  }
+}
+
+.perm-list { display: flex; flex-direction: column; gap: 10px; max-height: 320px; overflow-y: auto; }
+.perm-row {
+  display: flex; align-items: flex-start; gap: 10px; font-size: 13px; cursor: pointer;
+  input[type="checkbox"] { margin-top: 3px; }
+}
