@@ -1,0 +1,48 @@
+@use '@fortawesome/fontawesome-free/css/all.min.css';
+@use 'ngx-toastr/toastr';
+
+:root {
+  --ink: #1B2A4A;
+  --ink-soft: #324268;
+  --parchment: #FAF6EC;
+  --paper: #FFFFFF;
+  --gain: #2F6F62;
+  --gain-soft: #E4EFEA;
+  --loss: #9C3B26;
+  --loss-soft: #F3E4DE;
+  --gold: #C08A2E;
+  --gold-soft: #F6ECD8;
+  --steel: #5C6EA8;
+  --steel-soft: #E7EAF4;
+  --line: #DCD3C1;
+  --line-soft: #EAE3D5;
+  --text-muted: #6B6455;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--parchment);
+  font-family: 'IBM Plex Sans', sans-serif;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+.num {
+  font-family: 'IBM Plex Mono', monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.display {
+  font-family: 'Fraunces', serif;
+}
+
+.wrap {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 0 20px 80px;
+}
+
+a { color: inherit; }

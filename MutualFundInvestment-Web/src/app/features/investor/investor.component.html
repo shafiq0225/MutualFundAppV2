@@ -1,0 +1,166 @@
+<app-loading-spinner *ngIf="loading" message="Loading portfolio..."></app-loading-spinner>
+
+<div class="wrap" *ngIf="!loading && overview">
+
+  <div class="page-head">
+    <h1 class="display">Family Passbook</h1>
+    <select class="member-select" [ngModel]="selectedUserId" (ngModelChange)="selectMember($event)">
+      <option value="family">Family (All Members)</option>
+      <option *ngFor="let m of overview.members" [value]="m.userId">
+        {{ m.fullName }}<ng-container *ngIf="relationOf(m.userId)"> ({{ relationOf(m.userId) }})</ng-container>
+      </option>
+    </select>
+  </div>
+
+  <!-- ── Investor Details Card (only when a specific member selected) ── -->
+  <div class="investor-card" *ngIf="currentMember as cm">
+    <div class="ic-row">
+      <div class="ic-item">
+        <span>Primary Holder</span>
+        <strong>{{ cm.fullName }}</strong>
+      </div>
+      <div class="ic-item">
+        <span>PAN</span>
+        <strong class="num">{{ panOf(cm.userId) }}</strong>
+      </div>
+      <div class="ic-item">
+        <span>Folios Linked</span>
+        <strong class="num">{{ foliosLinkedFor(cm.userId) }}</strong>
+      </div>
+      <div class="ic-item" *ngIf="memberSinceOf(cm.userId) as since">
+        <span>Member Since</span>
+        <strong>{{ since | date:'MMM yyyy' }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Summary Donuts ─────────────────────────────────────── -->
+  <div class="summary-grid" *ngIf="headline as h">
+    <div class="summary-card">
+      <h3>Principal vs Gains</h3>
+      <div class="donut-row">
+        <app-donut-chart [segments]="principalGainsSegments" [size]="120" [thickness]="16">
+          <span class="donut-center-value num">₹{{ h.currentValue | number:'1.0-0' }}</span>
+        </app-donut-chart>
+        <div class="donut-legend">
+          <div><span class="dot" style="background:var(--steel)"></span> Principal: ₹{{ h.totalInvested | number:'1.0-0' }}</div>
+          <div><span class="dot" style="background:var(--gain)"></span> Gains: ₹{{ h.profitLoss | number:'1.0-0' }}</div>
+          <div class="pnl-pct" [class.loss]="h.profitLoss < 0">{{ h.profitLossPercent | number:'1.2-2' }}%</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-card">
+      <h3>Returns by Period</h3>
+      <div class="period-donuts">
+        <div class="period-donut" *ngFor="let p of periods">
+          <app-donut-chart [segments]="periodDonutSegments(periodReturnOf(h, p.key))" [size]="64" [thickness]="8">
+            <span class="period-pct num"
+                  [class.loss]="periodReturnOf(h, p.key) && !periodReturnOf(h, p.key)!.isPositive">
+              {{ periodReturnOf(h, p.key)?.hasData ? ((periodReturnOf(h, p.key)!.returnPercent | number:'1.1-1') + '%') : '—' }}
+            </span>
+          </app-donut-chart>
+          <span class="period-label">{{ p.label }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Family Member List (aggregate view only) ──────────────── -->
+  <div class="family-list" *ngIf="selectedUserId === 'family'">
+    <div class="fam-card" *ngFor="let m of overview.members" (click)="selectMember(m.userId)">
+      <div class="fam-name">{{ m.fullName }}</div>
+      <div class="fam-rel" *ngIf="relationOf(m.userId)">{{ relationOf(m.userId) }}</div>
+      <div class="fam-value num">₹{{ m.currentValue | number:'1.0-0' }}</div>
+      <div class="fam-pnl num" [class.loss]="m.profitLoss < 0">
+        {{ m.profitLoss >= 0 ? '+' : '' }}{{ m.profitLossPercent | number:'1.2-2' }}%
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Scheme Cards (member view only) ───────────────────────── -->
+  <app-loading-spinner *ngIf="loadingMemberDetail" message="Loading holdings..."></app-loading-spinner>
+
+  <div class="scheme-grid" *ngIf="selectedUserId !== 'family' && !loadingMemberDetail">
+    <div class="scheme-card-lg" *ngFor="let s of memberHoldings" (click)="openSchemeDetail(s)">
+      <div class="scl-header">
+        <div>
+          <div class="scl-name">{{ s.schemeName }}</div>
+          <div class="scl-fund">{{ s.fundName }}</div>
+        </div>
+        <app-donut-chart [segments]="[
+          { value: s.totalInvested, color: 'var(--steel)' },
+          { value: (s.profitLoss > 0 ? s.profitLoss : 0), color: 'var(--gain)' }
+        ]" [size]="56" [thickness]="8"></app-donut-chart>
+      </div>
+      <div class="scl-stats">
+        <div><span>Invested</span><strong class="num">₹{{ s.totalInvested | number:'1.0-0' }}</strong></div>
+        <div><span>Current</span><strong class="num">₹{{ s.currentValue | number:'1.0-0' }}</strong></div>
+        <div><span>P&amp;L</span><strong class="num" [class.loss]="s.profitLoss < 0">
+          {{ s.profitLoss >= 0 ? '+' : '' }}{{ s.profitLossPercent | number:'1.2-2' }}%
+        </strong></div>
+      </div>
+    </div>
+    <div class="empty-note" *ngIf="!memberHoldings.length">No holdings for this member yet.</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════
+     Scheme Detail — raw transaction ledger
+     ══════════════════════════════════════════════════════════ -->
+<div class="drawer-overlay" *ngIf="selectedScheme" (click)="closeSchemeDetail()">
+  <div class="drawer" (click)="$event.stopPropagation()">
+    <div class="drawer-header">
+      <div>
+        <h3 class="display">{{ selectedScheme.schemeName }}</h3>
+        <p class="sub">{{ selectedScheme.fundName }}</p>
+      </div>
+      <button class="icon-btn" (click)="closeSchemeDetail()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <div class="drawer-body">
+      <div class="ledger-filter">
+        <input type="date" [(ngModel)]="ledgerDateFrom" />
+        <span>to</span>
+        <input type="date" [(ngModel)]="ledgerDateTo" />
+      </div>
+
+      <div class="ledger-totals">
+        <div><span>Invested</span><strong class="num">₹{{ ledgerTotals.invested | number:'1.0-0' }}</strong></div>
+        <div><span>Current</span><strong class="num">₹{{ ledgerTotals.currentValue | number:'1.0-0' }}</strong></div>
+        <div><span>Units</span><strong class="num">{{ ledgerTotals.units | number:'1.4-4' }}</strong></div>
+        <div><span>P&amp;L</span><strong class="num" [class.loss]="ledgerTotals.pnl < 0">₹{{ ledgerTotals.pnl | number:'1.0-0' }}</strong></div>
+      </div>
+
+      <table class="ledger-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th class="num">Invested</th>
+            <th class="num">NAV (Buy)</th>
+            <th class="num">Units</th>
+            <th class="num">NAV (Now)</th>
+            <th class="num">Value</th>
+            <th class="num">P&amp;L</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of filteredLedgerRows">
+            <td>{{ row.purchaseDate | date:'dd MMM yy' }}</td>
+            <td class="num">₹{{ row.investedAmount | number:'1.0-0' }}</td>
+            <td class="num">₹{{ row.purchaseNAV | number:'1.4-4' }}</td>
+            <td class="num">{{ row.units | number:'1.4-4' }}</td>
+            <td class="num">₹{{ row.currentNAV | number:'1.4-4' }}</td>
+            <td class="num">₹{{ row.currentValue | number:'1.0-0' }}</td>
+            <td class="num" [class.loss]="!row.isProfit">
+              {{ row.isProfit ? '+' : '' }}{{ row.profitLossPercent | number:'1.2-2' }}%
+            </td>
+          </tr>
+          <tr *ngIf="!filteredLedgerRows.length">
+            <td colspan="7" class="empty-row">No transactions in this range.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
