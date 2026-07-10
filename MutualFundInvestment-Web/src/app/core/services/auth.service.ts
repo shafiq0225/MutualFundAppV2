@@ -1,60 +1,49 @@
 import { Injectable, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
-import { Router } from '@angular/router';
-import { environment } from '../../../environments/environment';
-import { LoginDto, TokenResponseDto, DecodedTokenClaims } from '../models/auth.model';
+import { DecodedTokenClaims } from '../models/auth.model';
 
-const TOKEN_KEY = 'mf_investment_access_token';
-const REFRESH_KEY = 'mf_investment_refresh_token';
+// Cookie name written by MutualFundAuth-Web after login.
+// Cookies are scoped by domain (not port), so both apps running on localhost
+// share the same cookie jar — unlike localStorage which is per origin (host+port).
+const COOKIE_NAME = 'mf_access_token';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly api = `${environment.authApiUrl}/api/auth`;
-
-  // Reactive signal so the app shell can show/hide login state
+  // Signal used only for topbar display (user name).
+  // Auth decisions always call decodeStoredToken() fresh — never read the signal —
+  // so the cookie written by Auth-Web is always picked up on page refresh.
   currentUser = signal<DecodedTokenClaims | null>(this.decodeStoredToken());
 
-  constructor(private http: HttpClient, private router: Router) {}
-
-  login(dto: LoginDto): Observable<TokenResponseDto> {
-    return this.http.post<TokenResponseDto>(`${this.api}/login`, dto).pipe(
-      tap(res => {
-        localStorage.setItem(TOKEN_KEY, res.accessToken);
-        localStorage.setItem(REFRESH_KEY, res.refreshToken);
-        this.currentUser.set(this.decodeToken(res.accessToken));
-      })
-    );
-  }
-
-  logout(): void {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(REFRESH_KEY);
-    this.currentUser.set(null);
-    this.router.navigate(['/login']);
+  /**
+   * Read fresh from the shared cookie on every call so that a login performed
+   * in MutualFundAuth-Web (different port, same domain) is recognised
+   * immediately after a page refresh in this app.
+   */
+  isAuthenticated(): boolean {
+    const claims = this.decodeStoredToken();
+    if (!claims) return false;
+    this.currentUser.set(claims);   // keep topbar in sync
+    return true;
   }
 
   getAccessToken(): string | null {
-    return localStorage.getItem(TOKEN_KEY);
-  }
-
-  isAuthenticated(): boolean {
-    const claims = this.currentUser();
-    if (!claims) return false;
-    return claims.exp * 1000 > Date.now();
+    return this.getCookie(COOKIE_NAME);
   }
 
   private decodeStoredToken(): DecodedTokenClaims | null {
-    const token = this.getAccessToken();
+    const token = this.getCookie(COOKIE_NAME);
     if (!token) return null;
     const claims = this.decodeToken(token);
-    // Drop expired tokens on load rather than pretending they're valid
-    if (claims && claims.exp * 1000 <= Date.now()) {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(REFRESH_KEY);
-      return null;
-    }
+    if (!claims) return null;
+    // Treat expired tokens as absent
+    if (claims.exp * 1000 <= Date.now()) return null;
     return claims;
+  }
+
+  private getCookie(name: string): string | null {
+    const match = document.cookie
+      .split('; ')
+      .find(row => row.startsWith(`${name}=`));
+    return match ? decodeURIComponent(match.split('=').slice(1).join('=')) : null;
   }
 
   private decodeToken(token: string): DecodedTokenClaims | null {

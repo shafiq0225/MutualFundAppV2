@@ -18,15 +18,12 @@ export class App {
 
   currentUser = this.authService.currentUser;
 
-  isLoginPage = toSignal(
+  // Hide the topbar on the unauthorized page — that page has its own full-screen layout
+  isUnauthorizedPage = toSignal(
     this.router.events.pipe(
       filter((e): e is NavigationEnd => e instanceof NavigationEnd),
-      map(e => e.urlAfterRedirects.startsWith('/login'))
+      map(e => e.urlAfterRedirects.startsWith('/unauthorized'))
     ),
-    { initialValue: this.router.url.startsWith('/login') }
+    { initialValue: this.router.url.startsWith('/unauthorized') }
   );
-
-  logout(): void {
-    this.authService.logout();
-  }
 }

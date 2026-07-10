@@ -1,4 +1,4 @@
-<div class="topbar" *ngIf="!isLoginPage()">
+<div class="topbar" *ngIf="!isUnauthorizedPage()">
   <span class="brand display"><i class="fas fa-book"></i> Investment Passbook</span>
   <nav>
     <a routerLink="/orders" routerLinkActive="active"><i class="fas fa-receipt"></i> Orders</a>
@@ -6,7 +6,6 @@
   </nav>
   <div class="user-area" *ngIf="currentUser() as user">
     <span class="user-name">{{ user.firstName }} {{ user.lastName }}</span>
-    <button class="logout-btn" (click)="logout()"><i class="fas fa-sign-out-alt"></i></button>
   </div>
 </div>
 

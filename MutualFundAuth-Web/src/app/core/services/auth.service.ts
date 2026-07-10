@@ -57,11 +57,17 @@ export class AuthService {
   private setTokens(accessToken: string, refreshToken: string): void {
     localStorage.setItem(this.tokenKey, accessToken);
     localStorage.setItem(this.refreshTokenKey, refreshToken);
+    // Also write to a cookie so other apps on the same domain (different ports)
+    // can read the token — localStorage is origin-scoped (host+port), cookies are not.
+    const maxAge = 60 * 60 * 8; // 8 hours
+    document.cookie = `mf_access_token=${accessToken}; path=/; max-age=${maxAge}; SameSite=Lax`;
   }
 
   private clearTokens(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.refreshTokenKey);
+    // Expire the shared cookie
+    document.cookie = `mf_access_token=; path=/; max-age=0; SameSite=Lax`;
   }
 
   private checkAuthStatus(): void {
