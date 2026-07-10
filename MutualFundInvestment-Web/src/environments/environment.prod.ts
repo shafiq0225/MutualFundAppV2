@@ -1,7 +1,7 @@
 export const environment = {
   production: true,
-  // TODO: replace with deployed URLs when hosted
-  investmentApiUrl: 'https://REPLACE-WITH-DEPLOYED-INVESTMENT-API-URL',
-  schemeApiUrl: 'https://REPLACE-WITH-DEPLOYED-SCHEMEAPI-URL',
-  authApiUrl: 'https://REPLACE-WITH-DEPLOYED-AUTHAPI-URL'
+  // TODO: replace with the deployed Gateway URL when hosted
+  investmentApiUrl: 'https://REPLACE-WITH-DEPLOYED-GATEWAY-URL',
+  schemeApiUrl: 'https://REPLACE-WITH-DEPLOYED-GATEWAY-URL',
+  authApiUrl: 'https://REPLACE-WITH-DEPLOYED-GATEWAY-URL'
 };

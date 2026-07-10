@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  // TODO: replace with deployed AuthAPI URL (or Gateway URL once available)
-  authApiUrl: 'https://app-mutualfund-auth.azurewebsites.net'
+  // TODO: replace with the deployed Gateway URL when hosted
+  authApiUrl: 'https://REPLACE-WITH-DEPLOYED-GATEWAY-URL'
 };
