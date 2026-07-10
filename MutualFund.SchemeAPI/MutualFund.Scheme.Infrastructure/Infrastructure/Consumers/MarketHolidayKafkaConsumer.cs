@@ -28,6 +28,13 @@ namespace MutualFund.Scheme.Infrastructure.Consumers
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            // Yield immediately so the generic host's StartAsync() returns right away
+            // instead of blocking on this thread until the first Kafka message arrives.
+            // Without this, ConsumerBuilder.Build()/Subscribe()/Consume() below all run
+            // synchronously on the host startup thread (since there's no earlier await),
+            // which prevents Kestrel from ever starting to accept requests.
+            await Task.Yield();
+
             var bootstrapServers = _config["Kafka:BootstrapServers"] ?? "127.0.0.1:9092";
             var topic = _config["Kafka:Topics:MarketHoliday"] ?? "market-holidays";
             var groupId = _config["Kafka:ConsumerGroups:MarketHoliday"] ?? "scheme-api-holiday-consumer";
