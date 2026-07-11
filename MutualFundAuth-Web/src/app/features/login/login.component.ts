@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -13,13 +13,23 @@ import { AuthService, LoginDto } from '../../core/services/auth.service';
   styleUrl: './login.component.scss'
 })
 export class LoginComponent {
+  // Router is only present when this component is routed to directly in
+  // the standalone Auth-Web app (see app.routes.ts). When registered as
+  // auth-login-element (see main.elements.ts) it's bootstrapped with no
+  // router at all, so `inject` would throw — hence the optional injection
+  // and the loginSuccess/switchToRegister outputs, which the shell's
+  // LoginHostComponent listens for instead to drive its own router.
+  @Output() loginSuccess = new EventEmitter<void>();
+  @Output() switchToRegister = new EventEmitter<void>();
+
   loginForm: FormGroup;
   isLoading = false;
+
+  private readonly router = inject(Router, { optional: true });
 
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
-    private router: Router,
     private toastr: ToastrService
   ) {
     this.loginForm = this.fb.group({
@@ -40,7 +50,8 @@ export class LoginComponent {
     this.authService.login(loginDto).subscribe({
       next: () => {
         this.toastr.success('Login successful');
-        this.router.navigate(['/users']);
+        this.router?.navigate(['/users']);
+        this.loginSuccess.emit();
       },
       error: (error) => {
         this.isLoading = false;
@@ -53,6 +64,7 @@ export class LoginComponent {
   }
 
   goToRegister(): void {
-    this.router.navigate(['/register']);
+    this.router?.navigate(['/register']);
+    this.switchToRegister.emit();
   }
 }

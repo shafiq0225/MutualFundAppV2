@@ -19,7 +19,7 @@ export const remoteApps: Record<'scheme' | 'auth' | 'investment' | 'nav', Remote
   auth: {
     origin: 'http://localhost:4202',
     elementsBundle: '/elements/main.js',
-    tags: []
+    tags: ['auth-users-element', 'auth-pending-element', 'auth-family-element']
   },
   investment: {
     origin: 'http://localhost:4203',

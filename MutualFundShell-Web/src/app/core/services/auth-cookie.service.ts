@@ -7,13 +7,12 @@ export interface AuthUser {
 }
 
 /**
- * Reads the shared `mf_access_token` cookie the original integration plan
- * calls for. NOTE: as of this writing, MutualFundAuth-Web actually stores
- * its token in localStorage (key `access_token`), not this cookie —
- * localStorage doesn't cross ports, so the shell can't see it today. This
- * service is written against the *intended* shared-cookie design so it
- * starts working the moment Auth is updated to set that cookie; until then
- * it degrades to `null` rather than guessing.
+ * Reads the shared `mf_access_token` cookie. MutualFundAuth-Web's
+ * AuthService sets this cookie (in addition to its own localStorage
+ * entries) on login/logout — see auth.service.ts. Cookies aren't
+ * port-scoped like localStorage is, so this works regardless of whether
+ * the token was set from Auth-Web's own origin (:4202) or from inside an
+ * embedded auth-login-element running in the shell's own document (:4200).
  */
 @Injectable({ providedIn: 'root' })
 export class AuthCookieService {

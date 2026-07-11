@@ -65,6 +65,30 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "elements": {
+              "index": false,
+              "browser": "src/main.elements.ts",
+              "outputPath": {
+                "base": "public/elements",
+                "browser": ""
+              },
+              "outputHashing": "none",
+              "polyfills": [],
+              "styles": [],
+              "assets": [],
+              "extractLicenses": false,
+              "optimization": {
+                "scripts": true,
+                "styles": false,
+                "fonts": false
+              },
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ]
             }
           },
           "defaultConfiguration": "production"

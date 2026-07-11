@@ -14,6 +14,24 @@ export interface TokenResponseDto {
   expiresIn: number;
 }
 
+// Cookies (unlike localStorage) are scoped by hostname only, not port — a
+// cookie set with no explicit Domain from http://localhost:4202 is also
+// readable from http://localhost:4200, :4205, etc. That's what lets the
+// shell (and every other embedded remote) see the logged-in user without
+// each of them needing their own copy of this service. See
+// MutualFundShell-Web's AuthCookieService, which was already written
+// against this exact cookie name in anticipation of this fix.
+const COOKIE_NAME = 'mf_access_token';
+const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 8; // 8h, matches typical access-token lifetime
+
+function setCookie(name: string, value: string, maxAgeSeconds: number): void {
+  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAgeSeconds}; SameSite=Lax`;
+}
+
+function clearCookie(name: string): void {
+  document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`;
+}
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly authApi = `${environment.authApiUrl}/api/auth`;
@@ -30,7 +48,7 @@ export class AuthService {
   login(dto: LoginDto): Observable<TokenResponseDto> {
     return this.http.post<TokenResponseDto>(`${this.authApi}/login`, dto).pipe(
       tap(response => {
-        this.setTokens(response.accessToken, response.refreshToken);
+        this.setTokens(response.accessToken, response.refreshToken, response.expiresIn);
         this.isAuthenticatedSubject.next(true);
       })
     );
@@ -54,14 +72,16 @@ export class AuthService {
     return localStorage.getItem(this.refreshTokenKey);
   }
 
-  private setTokens(accessToken: string, refreshToken: string): void {
+  private setTokens(accessToken: string, refreshToken: string, expiresIn?: number): void {
     localStorage.setItem(this.tokenKey, accessToken);
     localStorage.setItem(this.refreshTokenKey, refreshToken);
+    setCookie(COOKIE_NAME, accessToken, expiresIn && expiresIn > 0 ? expiresIn : COOKIE_MAX_AGE_SECONDS);
   }
 
   private clearTokens(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.refreshTokenKey);
+    clearCookie(COOKIE_NAME);
   }
 
   private checkAuthStatus(): void {

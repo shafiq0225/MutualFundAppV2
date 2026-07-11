@@ -48,10 +48,19 @@ export class TopbarComponent {
     return title;
   }
 
-  // Best-effort — see AuthCookieService for why this is currently often
-  // null (Auth app stores its token in localStorage today, not the shared
-  // cookie the integration plan calls for).
-  user = this.authCookie.getUser();
+  // Recomputed on every NavigationEnd, same reasoning as pageTitle above:
+  // after a successful login the shell navigates via router.navigateByUrl
+  // (see LoginHostComponent), which doesn't recreate TopbarComponent (it
+  // lives outside the routed outlet), so a one-time field read at
+  // construction would stay stale until a hard refresh.
+  user = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      startWith(null),
+      map(() => this.authCookie.getUser())
+    ),
+    { initialValue: this.authCookie.getUser() }
+  );
 
   menuOpen = false;
 
@@ -69,8 +78,13 @@ export class TopbarComponent {
   }
 
   logout(): void {
-    // The shell can't clear Auth's own localStorage across origins, so
-    // logout hands off to the Auth app itself, which owns that state.
+    // The cookie is shared across ports (see AuthCookieService), so the
+    // shell can clear it directly now instead of only handing off to Auth.
+    // We still hand off to Auth-Web's /login afterward — it owns the
+    // refresh-token localStorage entry and calls the real logout endpoint
+    // to invalidate that refresh token server-side, which the shell has no
+    // way to do itself.
+    document.cookie = 'mf_access_token=; path=/; max-age=0; SameSite=Lax';
     window.location.href = `${remoteApps.auth.origin}/login`;
   }
 }

@@ -1,0 +1,752 @@
+diff --git a/MutualFundAuth-Web/.gitignore b/MutualFundAuth-Web/.gitignore
+new file mode 100644
+index 0000000..00d34c4
+--- /dev/null
++++ b/MutualFundAuth-Web/.gitignore
+@@ -0,0 +1,47 @@
++# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
++
++# Compiled output
++/dist
++/tmp
++/out-tsc
++/bazel-out
++
++# Generated custom-elements bundle (npm run build:elements) — rebuilt on demand,
++# not checked in. Deploy alongside the standalone dist output.
++/public/elements
++
++# Node
++/node_modules
++npm-debug.log
++yarn-error.log
++
++# IDEs and editors
++.idea/
++.project
++.classpath
++.c9/
++*.launch
++.settings/
++*.sublime-workspace
++
++# Visual Studio Code
++.vscode/*
++!.vscode/settings.json
++!.vscode/tasks.json
++!.vscode/launch.json
++!.vscode/extensions.json
++.history/*
++
++# Miscellaneous
++/.angular/cache
++.sass-cache/
++/connect.lock
++/coverage
++/libpeerconnection.log
++testem.log
++/typings
++__screenshots__/
++
++# System files
++.DS_Store
++Thumbs.db
+diff --git a/MutualFundAuth-Web/angular.json b/MutualFundAuth-Web/angular.json
+index 6ebcea6..65bfd38 100644
+--- a/MutualFundAuth-Web/angular.json
++++ b/MutualFundAuth-Web/angular.json
+@@ -65,6 +65,30 @@
+               "optimization": false,
+               "extractLicenses": false,
+               "sourceMap": true
++            },
++            "elements": {
++              "index": false,
++              "browser": "src/main.elements.ts",
++              "outputPath": {
++                "base": "public/elements",
++                "browser": ""
++              },
++              "outputHashing": "none",
++              "polyfills": [],
++              "styles": [],
++              "assets": [],
++              "extractLicenses": false,
++              "optimization": {
++                "scripts": true,
++                "styles": false,
++                "fonts": false
++              },
++              "fileReplacements": [
++                {
++                  "replace": "src/environments/environment.ts",
++                  "with": "src/environments/environment.prod.ts"
++                }
++              ]
+             }
+           },
+           "defaultConfiguration": "production"
+diff --git a/MutualFundAuth-Web/package.json b/MutualFundAuth-Web/package.json
+index d17dfe4..bb1f839 100644
+--- a/MutualFundAuth-Web/package.json
++++ b/MutualFundAuth-Web/package.json
+@@ -5,7 +5,9 @@
+     "ng": "ng",
+     "start": "ng serve",
+     "build": "ng build",
++    "build:elements": "ng build --configuration elements",
+     "watch": "ng build --watch --configuration development",
++    "watch:elements": "ng build --configuration elements --watch",
+     "test": "ng test"
+   },
+   "prettier": {
+@@ -21,6 +23,7 @@
+     "@angular/common": "^20.3.0",
+     "@angular/compiler": "^20.3.0",
+     "@angular/core": "^20.3.0",
++    "@angular/elements": "^20.3.0",
+     "@angular/forms": "^20.3.0",
+     "@angular/platform-browser": "^20.3.0",
+     "@angular/router": "^20.3.0",
+diff --git a/MutualFundAuth-Web/src/app/core/interceptors/auth.interceptor.ts b/MutualFundAuth-Web/src/app/core/interceptors/auth.interceptor.ts
+index ec16784..d14ccd9 100644
+--- a/MutualFundAuth-Web/src/app/core/interceptors/auth.interceptor.ts
++++ b/MutualFundAuth-Web/src/app/core/interceptors/auth.interceptor.ts
+@@ -6,12 +6,25 @@ import {
+ } from '@angular/common/http';
+ import { Observable } from 'rxjs';
+ 
++const COOKIE_NAME = 'mf_access_token';
++
++function readCookie(name: string): string | null {
++  const match = document.cookie
++    .split('; ')
++    .find((row) => row.startsWith(name + '='));
++  return match ? decodeURIComponent(match.split('=').slice(1).join('=')) : null;
++}
++
+ export const authInterceptor: HttpInterceptorFn = (
+   req: HttpRequest<unknown>,
+   next: HttpHandlerFn
+ ): Observable<HttpEvent<unknown>> => {
+-  const token = localStorage.getItem('access_token');
+-  
++  // Cookie first: this same interceptor also ships inside main.elements.ts
++  // and runs inside whichever document embeds it (the shell, at whatever
++  // port), so it needs to read whatever that document's origin can see.
++  // The cookie is shared across localhost ports; localStorage isn't.
++  const token = readCookie(COOKIE_NAME) || localStorage.getItem('access_token');
++
+   if (token) {
+     const authReq = req.clone({
+       setHeaders: {
+@@ -20,6 +33,6 @@ export const authInterceptor: HttpInterceptorFn = (
+     });
+     return next(authReq);
+   }
+-  
++
+   return next(req);
+ };
+diff --git a/MutualFundAuth-Web/src/app/core/services/auth.service.ts b/MutualFundAuth-Web/src/app/core/services/auth.service.ts
+index a039220..284b8f3 100644
+--- a/MutualFundAuth-Web/src/app/core/services/auth.service.ts
++++ b/MutualFundAuth-Web/src/app/core/services/auth.service.ts
+@@ -14,6 +14,24 @@ export interface TokenResponseDto {
+   expiresIn: number;
+ }
+ 
++// Cookies (unlike localStorage) are scoped by hostname only, not port — a
++// cookie set with no explicit Domain from http://localhost:4202 is also
++// readable from http://localhost:4200, :4205, etc. That's what lets the
++// shell (and every other embedded remote) see the logged-in user without
++// each of them needing their own copy of this service. See
++// MutualFundShell-Web's AuthCookieService, which was already written
++// against this exact cookie name in anticipation of this fix.
++const COOKIE_NAME = 'mf_access_token';
++const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 8; // 8h, matches typical access-token lifetime
++
++function setCookie(name: string, value: string, maxAgeSeconds: number): void {
++  document.cookie = `${name}=${encodeURIComponent(value)}; path=/; max-age=${maxAgeSeconds}; SameSite=Lax`;
++}
++
++function clearCookie(name: string): void {
++  document.cookie = `${name}=; path=/; max-age=0; SameSite=Lax`;
++}
++
+ @Injectable({ providedIn: 'root' })
+ export class AuthService {
+   private readonly authApi = `${environment.authApiUrl}/api/auth`;
+@@ -30,7 +48,7 @@ export class AuthService {
+   login(dto: LoginDto): Observable<TokenResponseDto> {
+     return this.http.post<TokenResponseDto>(`${this.authApi}/login`, dto).pipe(
+       tap(response => {
+-        this.setTokens(response.accessToken, response.refreshToken);
++        this.setTokens(response.accessToken, response.refreshToken, response.expiresIn);
+         this.isAuthenticatedSubject.next(true);
+       })
+     );
+@@ -54,14 +72,16 @@ export class AuthService {
+     return localStorage.getItem(this.refreshTokenKey);
+   }
+ 
+-  private setTokens(accessToken: string, refreshToken: string): void {
++  private setTokens(accessToken: string, refreshToken: string, expiresIn?: number): void {
+     localStorage.setItem(this.tokenKey, accessToken);
+     localStorage.setItem(this.refreshTokenKey, refreshToken);
++    setCookie(COOKIE_NAME, accessToken, expiresIn && expiresIn > 0 ? expiresIn : COOKIE_MAX_AGE_SECONDS);
+   }
+ 
+   private clearTokens(): void {
+     localStorage.removeItem(this.tokenKey);
+     localStorage.removeItem(this.refreshTokenKey);
++    clearCookie(COOKIE_NAME);
+   }
+ 
+   private checkAuthStatus(): void {
+diff --git a/MutualFundAuth-Web/src/app/features/login/login.component.ts b/MutualFundAuth-Web/src/app/features/login/login.component.ts
+index 430a02f..71e2412 100644
+--- a/MutualFundAuth-Web/src/app/features/login/login.component.ts
++++ b/MutualFundAuth-Web/src/app/features/login/login.component.ts
+@@ -1,4 +1,4 @@
+-import { Component } from '@angular/core';
++import { Component, EventEmitter, Output, inject } from '@angular/core';
+ import { CommonModule } from '@angular/common';
+ import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+ import { Router } from '@angular/router';
+@@ -13,13 +13,23 @@ import { AuthService, LoginDto } from '../../core/services/auth.service';
+   styleUrl: './login.component.scss'
+ })
+ export class LoginComponent {
++  // Router is only present when this component is routed to directly in
++  // the standalone Auth-Web app (see app.routes.ts). When registered as
++  // auth-login-element (see main.elements.ts) it's bootstrapped with no
++  // router at all, so `inject` would throw — hence the optional injection
++  // and the loginSuccess/switchToRegister outputs, which the shell's
++  // LoginHostComponent listens for instead to drive its own router.
++  @Output() loginSuccess = new EventEmitter<void>();
++  @Output() switchToRegister = new EventEmitter<void>();
++
+   loginForm: FormGroup;
+   isLoading = false;
+ 
++  private readonly router = inject(Router, { optional: true });
++
+   constructor(
+     private fb: FormBuilder,
+     private authService: AuthService,
+-    private router: Router,
+     private toastr: ToastrService
+   ) {
+     this.loginForm = this.fb.group({
+@@ -40,7 +50,8 @@ export class LoginComponent {
+     this.authService.login(loginDto).subscribe({
+       next: () => {
+         this.toastr.success('Login successful');
+-        this.router.navigate(['/users']);
++        this.router?.navigate(['/users']);
++        this.loginSuccess.emit();
+       },
+       error: (error) => {
+         this.isLoading = false;
+@@ -53,6 +64,7 @@ export class LoginComponent {
+   }
+ 
+   goToRegister(): void {
+-    this.router.navigate(['/register']);
++    this.router?.navigate(['/register']);
++    this.switchToRegister.emit();
+   }
+ }
+diff --git a/MutualFundAuth-Web/src/main.elements.ts b/MutualFundAuth-Web/src/main.elements.ts
+new file mode 100644
+index 0000000..1d72e1e
+--- /dev/null
++++ b/MutualFundAuth-Web/src/main.elements.ts
+@@ -0,0 +1,87 @@
++// Web Component entry point — built via the "elements" configuration
++// (see angular.json), separate from src/main.ts which still bootstraps
++// this app standalone on port 4202 for direct dev/testing.
++//
++// Login IS registered here (auth-login-element) — it's how the shell gets
++// users authenticated without leaving its own page. It works with no
++// router in this injector because LoginComponent's Router dependency is
++// optional; on success/switch it emits loginSuccess/switchToRegister
++// outputs instead, which the shell's LoginHostComponent listens for.
++//
++// Register is deliberately NOT registered here — it stays a full-page
++// redirect to this app's own origin (see the shell's login/switchToRegister
++// and logout handling). Registration isn't a "logged in" action, so there's
++// no shared-session reason to embed it, and keeping it out narrows this
++// bundle's scope to what the shell actually needs post-login.
++//
++// UsersComponent, PendingComponent, and FamilyComponent don't use the
++// Router at all (unlike Scheme-Web's NavComponent), so none of them need
++// the router-outlet-wrapper + MemoryLocationStrategy + explicit
++// initialNavigation() dance that scheme-nav-element required. Each is
++// just createCustomElement() directly, same as scheme-list-element.
++
++import 'zone.js';
++import { createApplication } from '@angular/platform-browser';
++import { createCustomElement } from '@angular/elements';
++import { provideHttpClient, withInterceptors } from '@angular/common/http';
++import { provideAnimations } from '@angular/platform-browser/animations';
++import { provideToastr } from 'ngx-toastr';
++
++import { UsersComponent } from './app/features/users/users.component';
++import { PendingComponent } from './app/features/users/pending/pending.component';
++import { FamilyComponent } from './app/features/family/family.component';
++import { LoginComponent } from './app/features/login/login.component';
++import { authInterceptor } from './app/core/interceptors/auth.interceptor';
++
++const sharedProviders = [
++  provideHttpClient(withInterceptors([authInterceptor])),
++  provideAnimations(),
++  provideToastr({
++    timeOut: 3500,
++    positionClass: 'toast-top-right',
++    preventDuplicates: true
++  })
++];
++
++async function registerAuthUsersElement(): Promise<void> {
++  if (customElements.get('auth-users-element')) return;
++
++  const app = await createApplication({ providers: sharedProviders });
++  const element = createCustomElement(UsersComponent, { injector: app.injector });
++  customElements.define('auth-users-element', element);
++}
++
++async function registerAuthPendingElement(): Promise<void> {
++  if (customElements.get('auth-pending-element')) return;
++
++  const app = await createApplication({ providers: sharedProviders });
++  const element = createCustomElement(PendingComponent, { injector: app.injector });
++  customElements.define('auth-pending-element', element);
++}
++
++async function registerAuthFamilyElement(): Promise<void> {
++  if (customElements.get('auth-family-element')) return;
++
++  const app = await createApplication({ providers: sharedProviders });
++  const element = createCustomElement(FamilyComponent, { injector: app.injector });
++  customElements.define('auth-family-element', element);
++}
++
++async function registerAuthLoginElement(): Promise<void> {
++  if (customElements.get('auth-login-element')) return;
++
++  // LoginComponent's Router dependency is optional (see login.component.ts)
++  // so it doesn't need a router provided here — it emits loginSuccess /
++  // switchToRegister outputs instead, which the shell's LoginHostComponent
++  // listens for and turns into real shell navigation.
++  const app = await createApplication({ providers: sharedProviders });
++  const element = createCustomElement(LoginComponent, { injector: app.injector });
++  customElements.define('auth-login-element', element);
++}
++
++Promise.all([
++  registerAuthUsersElement(),
++  registerAuthPendingElement(),
++  registerAuthFamilyElement(),
++  registerAuthLoginElement()
++]).catch((err) => console.error('Failed to register auth elements', err));
+diff --git a/MutualFundShell-Web/src/app/app.routes.ts b/MutualFundShell-Web/src/app/app.routes.ts
+index 1d7773f..f66aeaf 100644
+--- a/MutualFundShell-Web/src/app/app.routes.ts
++++ b/MutualFundShell-Web/src/app/app.routes.ts
+@@ -2,21 +2,28 @@ import { Routes } from '@angular/router';
+ import { PlaceholderComponent } from './features/placeholder/placeholder.component';
+ import { SchemeListHostComponent } from './features/scheme-host/scheme-list-host.component';
+ import { SchemeNavHostComponent } from './features/scheme-host/scheme-nav-host.component';
++import { UsersHostComponent } from './features/auth-host/users-host.component';
++import { PendingHostComponent } from './features/auth-host/pending-host.component';
++import { FamilyHostComponent } from './features/auth-host/family-host.component';
++import { LoginHostComponent } from './features/auth-host/login-host.component';
++import { authGuard } from './core/guards/auth.guard';
+ 
+ export const routes: Routes = [
+   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+ 
++  { path: 'login', component: LoginHostComponent, title: 'Login' },
++
+   // Functional today
+-  { path: 'scheme', component: SchemeListHostComponent, title: 'Scheme Management' },
+-  { path: 'nav-comparison', component: SchemeNavHostComponent, title: 'NAV Comparison' },
++  { path: 'scheme', component: SchemeListHostComponent, title: 'Scheme Management', canActivate: [authGuard] },
++  { path: 'nav-comparison', component: SchemeNavHostComponent, title: 'NAV Comparison', canActivate: [authGuard] },
++  { path: 'user', component: UsersHostComponent, title: 'User', canActivate: [authGuard] },
++  { path: 'pending-approvals', component: PendingHostComponent, title: 'Pending Approvals', canActivate: [authGuard] },
++  { path: 'family-groups', component: FamilyHostComponent, title: 'Family Groups', canActivate: [authGuard] },
+ 
+   // Placeholders — reserved in the sidebar, not yet wired to a remote
+-  { path: 'dashboard', component: PlaceholderComponent, data: { title: 'Dashboard' }, title: 'Dashboard' },
+-  { path: 'user', component: PlaceholderComponent, data: { title: 'User' }, title: 'User' },
+-  { path: 'pending-approvals', component: PlaceholderComponent, data: { title: 'Pending Approvals' }, title: 'Pending Approvals' },
+-  { path: 'family-groups', component: PlaceholderComponent, data: { title: 'Family Groups' }, title: 'Family Groups' },
+-  { path: 'orders', component: PlaceholderComponent, data: { title: 'Orders' }, title: 'Orders' },
+-  { path: 'portfolio', component: PlaceholderComponent, data: { title: 'Portfolio' }, title: 'Portfolio' },
++  { path: 'dashboard', component: PlaceholderComponent, data: { title: 'Dashboard' }, title: 'Dashboard', canActivate: [authGuard] },
++  { path: 'orders', component: PlaceholderComponent, data: { title: 'Orders' }, title: 'Orders', canActivate: [authGuard] },
++  { path: 'portfolio', component: PlaceholderComponent, data: { title: 'Portfolio' }, title: 'Portfolio', canActivate: [authGuard] },
+ 
+   { path: '**', redirectTo: 'dashboard' }
+ ];
+\ No newline at end of file
+diff --git a/MutualFundShell-Web/src/app/core/config/remote.config.ts b/MutualFundShell-Web/src/app/core/config/remote.config.ts
+index 89b7ace..103e271 100644
+--- a/MutualFundShell-Web/src/app/core/config/remote.config.ts
++++ b/MutualFundShell-Web/src/app/core/config/remote.config.ts
+@@ -19,7 +19,7 @@ export const remoteApps: Record<'scheme' | 'auth' | 'investment' | 'nav', Remote
+   auth: {
+     origin: 'http://localhost:4202',
+     elementsBundle: '/elements/main.js',
+-    tags: []
++    tags: ['auth-users-element', 'auth-pending-element', 'auth-family-element']
+   },
+   investment: {
+     origin: 'http://localhost:4203',
+diff --git a/MutualFundShell-Web/src/app/core/guards/auth.guard.ts b/MutualFundShell-Web/src/app/core/guards/auth.guard.ts
+new file mode 100644
+index 0000000..de42c42
+--- /dev/null
++++ b/MutualFundShell-Web/src/app/core/guards/auth.guard.ts
+@@ -0,0 +1,19 @@
++import { inject } from '@angular/core';
++import { CanActivateFn, Router } from '@angular/router';
++import { AuthCookieService } from '../services/auth-cookie.service';
++
++// Mirrors MutualFundAuth-Web's own auth.guard.ts, but checks the shared
++// mf_access_token cookie (via AuthCookieService) instead of AuthService,
++// since the shell has no AuthService of its own — the cookie is the only
++// thing it shares with Auth-Web.
++export const authGuard: CanActivateFn = (route, state) => {
++  const authCookie = inject(AuthCookieService);
++  const router = inject(Router);
++
++  if (authCookie.getUser()) {
++    return true;
++  }
++
++  router.navigate(['/login'], { queryParams: { returnUrl: state.url } });
++  return false;
++};
+diff --git a/MutualFundShell-Web/src/app/core/services/auth-cookie.service.ts b/MutualFundShell-Web/src/app/core/services/auth-cookie.service.ts
+index ba32ca6..ace5e62 100644
+--- a/MutualFundShell-Web/src/app/core/services/auth-cookie.service.ts
++++ b/MutualFundShell-Web/src/app/core/services/auth-cookie.service.ts
+@@ -7,13 +7,12 @@ export interface AuthUser {
+ }
+ 
+ /**
+- * Reads the shared `mf_access_token` cookie the original integration plan
+- * calls for. NOTE: as of this writing, MutualFundAuth-Web actually stores
+- * its token in localStorage (key `access_token`), not this cookie —
+- * localStorage doesn't cross ports, so the shell can't see it today. This
+- * service is written against the *intended* shared-cookie design so it
+- * starts working the moment Auth is updated to set that cookie; until then
+- * it degrades to `null` rather than guessing.
++ * Reads the shared `mf_access_token` cookie. MutualFundAuth-Web's
++ * AuthService sets this cookie (in addition to its own localStorage
++ * entries) on login/logout — see auth.service.ts. Cookies aren't
++ * port-scoped like localStorage is, so this works regardless of whether
++ * the token was set from Auth-Web's own origin (:4202) or from inside an
++ * embedded auth-login-element running in the shell's own document (:4200).
+  */
+ @Injectable({ providedIn: 'root' })
+ export class AuthCookieService {
+diff --git a/MutualFundShell-Web/src/app/features/auth-host/family-host.component.ts b/MutualFundShell-Web/src/app/features/auth-host/family-host.component.ts
+new file mode 100644
+index 0000000..2e2b668
+--- /dev/null
++++ b/MutualFundShell-Web/src/app/features/auth-host/family-host.component.ts
+@@ -0,0 +1,46 @@
++import { Component, CUSTOM_ELEMENTS_SCHEMA, OnInit, inject, signal } from '@angular/core';
++import { CommonModule } from '@angular/common';
++import { WebComponentLoaderService } from '../../core/services/webcomponent-loader.service';
++
++@Component({
++  selector: 'shell-family-host',
++  standalone: true,
++  imports: [CommonModule],
++  schemas: [CUSTOM_ELEMENTS_SCHEMA],
++  template: `
++    @if (ready()) {
++      <div class="page-container">
++        <auth-family-element></auth-family-element>
++      </div>
++    } @else if (error()) {
++      <div class="remote-error">
++        <i class="fas fa-triangle-exclamation"></i>
++        Family Groups is unavailable right now. Confirm MutualFundAuth-Web
++        is running on port 4202 and try again.
++      </div>
++    } @else {
++      <div class="remote-loading">
++        <i class="fas fa-circle-notch fa-spin"></i> Loading Family Groups…
++      </div>
++    }
++  `,
++  styles: [`
++    .remote-loading, .remote-error {
++      display: flex; align-items: center; gap: 10px;
++      padding: 40px; color: var(--text-muted, #6B6455);
++    }
++    .remote-error { color: var(--danger, #9C3B26); }
++  `]
++})
++export class FamilyHostComponent implements OnInit {
++  private readonly loader = inject(WebComponentLoaderService);
++
++  ready = signal(false);
++  error = signal(false);
++
++  ngOnInit(): void {
++    this.loader.load('auth')
++      .then(() => this.ready.set(true))
++      .catch(() => this.error.set(true));
++  }
++}
+diff --git a/MutualFundShell-Web/src/app/features/auth-host/login-host.component.ts b/MutualFundShell-Web/src/app/features/auth-host/login-host.component.ts
+new file mode 100644
+index 0000000..b97adbe
+--- /dev/null
++++ b/MutualFundShell-Web/src/app/features/auth-host/login-host.component.ts
+@@ -0,0 +1,68 @@
++import { Component, CUSTOM_ELEMENTS_SCHEMA, OnInit, inject, signal } from '@angular/core';
++import { CommonModule } from '@angular/common';
++import { ActivatedRoute, Router } from '@angular/router';
++import { WebComponentLoaderService } from '../../core/services/webcomponent-loader.service';
++import { remoteApps } from '../../core/config/remote.config';
++
++@Component({
++  selector: 'shell-login-host',
++  standalone: true,
++  imports: [CommonModule],
++  schemas: [CUSTOM_ELEMENTS_SCHEMA],
++  template: `
++    @if (ready()) {
++      <div class="page-container">
++        <!-- auth-login-element dispatches loginSuccess / switchToRegister as
++             native CustomEvents (that's how Angular Elements maps @Output),
++             so these bindings work even though this is an unknown element
++             as far as the shell's own compiler is concerned. -->
++        <auth-login-element
++          (loginSuccess)="onLoginSuccess()"
++          (switchToRegister)="onSwitchToRegister()">
++        </auth-login-element>
++      </div>
++    } @else if (error()) {
++      <div class="remote-error">
++        <i class="fas fa-triangle-exclamation"></i>
++        Login is unavailable right now. Confirm MutualFundAuth-Web is running
++        on port 4202 and try again.
++      </div>
++    } @else {
++      <div class="remote-loading">
++        <i class="fas fa-circle-notch fa-spin"></i> Loading Login…
++      </div>
++    }
++  `,
++  styles: [`
++    .remote-loading, .remote-error {
++      display: flex; align-items: center; gap: 10px;
++      padding: 40px; color: var(--text-muted, #6B6455);
++    }
++    .remote-error { color: var(--danger, #9C3B26); }
++  `]
++})
++export class LoginHostComponent implements OnInit {
++  private readonly loader = inject(WebComponentLoaderService);
++  private readonly router = inject(Router);
++  private readonly route = inject(ActivatedRoute);
++
++  ready = signal(false);
++  error = signal(false);
++
++  ngOnInit(): void {
++    this.loader.load('auth')
++      .then(() => this.ready.set(true))
++      .catch(() => this.error.set(true));
++  }
++
++  onLoginSuccess(): void {
++    const returnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
++    this.router.navigateByUrl(returnUrl || '/dashboard');
++  }
++
++  onSwitchToRegister(): void {
++    // Registration isn't a "logged in" action and isn't embedded (see
++    // main.elements.ts) — hand off to the standalone Auth-Web app itself.
++    window.location.href = `${remoteApps.auth.origin}/register`;
++  }
++}
+diff --git a/MutualFundShell-Web/src/app/features/auth-host/pending-host.component.ts b/MutualFundShell-Web/src/app/features/auth-host/pending-host.component.ts
+new file mode 100644
+index 0000000..c2abc49
+--- /dev/null
++++ b/MutualFundShell-Web/src/app/features/auth-host/pending-host.component.ts
+@@ -0,0 +1,46 @@
++import { Component, CUSTOM_ELEMENTS_SCHEMA, OnInit, inject, signal } from '@angular/core';
++import { CommonModule } from '@angular/common';
++import { WebComponentLoaderService } from '../../core/services/webcomponent-loader.service';
++
++@Component({
++  selector: 'shell-pending-host',
++  standalone: true,
++  imports: [CommonModule],
++  schemas: [CUSTOM_ELEMENTS_SCHEMA],
++  template: `
++    @if (ready()) {
++      <div class="page-container">
++        <auth-pending-element></auth-pending-element>
++      </div>
++    } @else if (error()) {
++      <div class="remote-error">
++        <i class="fas fa-triangle-exclamation"></i>
++        Pending Approvals is unavailable right now. Confirm MutualFundAuth-Web
++        is running on port 4202 and try again.
++      </div>
++    } @else {
++      <div class="remote-loading">
++        <i class="fas fa-circle-notch fa-spin"></i> Loading Pending Approvals…
++      </div>
++    }
++  `,
++  styles: [`
++    .remote-loading, .remote-error {
++      display: flex; align-items: center; gap: 10px;
++      padding: 40px; color: var(--text-muted, #6B6455);
++    }
++    .remote-error { color: var(--danger, #9C3B26); }
++  `]
++})
++export class PendingHostComponent implements OnInit {
++  private readonly loader = inject(WebComponentLoaderService);
++
++  ready = signal(false);
++  error = signal(false);
++
++  ngOnInit(): void {
++    this.loader.load('auth')
++      .then(() => this.ready.set(true))
++      .catch(() => this.error.set(true));
++  }
++}
+diff --git a/MutualFundShell-Web/src/app/features/auth-host/users-host.component.ts b/MutualFundShell-Web/src/app/features/auth-host/users-host.component.ts
+new file mode 100644
+index 0000000..0cf2b74
+--- /dev/null
++++ b/MutualFundShell-Web/src/app/features/auth-host/users-host.component.ts
+@@ -0,0 +1,46 @@
++import { Component, CUSTOM_ELEMENTS_SCHEMA, OnInit, inject, signal } from '@angular/core';
++import { CommonModule } from '@angular/common';
++import { WebComponentLoaderService } from '../../core/services/webcomponent-loader.service';
++
++@Component({
++  selector: 'shell-users-host',
++  standalone: true,
++  imports: [CommonModule],
++  schemas: [CUSTOM_ELEMENTS_SCHEMA],
++  template: `
++    @if (ready()) {
++      <div class="page-container">
++        <auth-users-element></auth-users-element>
++      </div>
++    } @else if (error()) {
++      <div class="remote-error">
++        <i class="fas fa-triangle-exclamation"></i>
++        User Management is unavailable right now. Confirm MutualFundAuth-Web
++        is running on port 4202 and try again.
++      </div>
++    } @else {
++      <div class="remote-loading">
++        <i class="fas fa-circle-notch fa-spin"></i> Loading User Management…
++      </div>
++    }
++  `,
++  styles: [`
++    .remote-loading, .remote-error {
++      display: flex; align-items: center; gap: 10px;
++      padding: 40px; color: var(--text-muted, #6B6455);
++    }
++    .remote-error { color: var(--danger, #9C3B26); }
++  `]
++})
++export class UsersHostComponent implements OnInit {
++  private readonly loader = inject(WebComponentLoaderService);
++
++  ready = signal(false);
++  error = signal(false);
++
++  ngOnInit(): void {
++    this.loader.load('auth')
++      .then(() => this.ready.set(true))
++      .catch(() => this.error.set(true));
++  }
++}
+diff --git a/MutualFundShell-Web/src/app/layout/topbar/topbar.component.html b/MutualFundShell-Web/src/app/layout/topbar/topbar.component.html
+index 99eaa28..951eb33 100644
+--- a/MutualFundShell-Web/src/app/layout/topbar/topbar.component.html
++++ b/MutualFundShell-Web/src/app/layout/topbar/topbar.component.html
+@@ -13,13 +13,13 @@
+ 
+     <div class="account" (click)="toggleMenu(); $event.stopPropagation()">
+       <i class="fas fa-circle-user"></i>
+-      <span>{{ user?.name ?? 'Account' }}</span>
++      <span>{{ user()?.name ?? 'Account' }}</span>
+       <i class="fas fa-chevron-down chevron"></i>
+ 
+       @if (menuOpen) {
+         <div class="account-menu" (click)="$event.stopPropagation()">
+-          @if (user?.email) {
+-            <div class="account-menu-email">{{ user?.email }}</div>
++          @if (user()?.email) {
++            <div class="account-menu-email">{{ user()?.email }}</div>
+           }
+           <button type="button" class="account-menu-item" (click)="logout()">
+             <i class="fas fa-right-from-bracket"></i> Logout
+diff --git a/MutualFundShell-Web/src/app/layout/topbar/topbar.component.ts b/MutualFundShell-Web/src/app/layout/topbar/topbar.component.ts
+index 6165645..8ba9c85 100644
+--- a/MutualFundShell-Web/src/app/layout/topbar/topbar.component.ts
++++ b/MutualFundShell-Web/src/app/layout/topbar/topbar.component.ts
+@@ -48,10 +48,19 @@ export class TopbarComponent {
+     return title;
+   }
+ 
+-  // Best-effort — see AuthCookieService for why this is currently often
+-  // null (Auth app stores its token in localStorage today, not the shared
+-  // cookie the integration plan calls for).
+-  user = this.authCookie.getUser();
++  // Recomputed on every NavigationEnd, same reasoning as pageTitle above:
++  // after a successful login the shell navigates via router.navigateByUrl
++  // (see LoginHostComponent), which doesn't recreate TopbarComponent (it
++  // lives outside the routed outlet), so a one-time field read at
++  // construction would stay stale until a hard refresh.
++  user = toSignal(
++    this.router.events.pipe(
++      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
++      startWith(null),
++      map(() => this.authCookie.getUser())
++    ),
++    { initialValue: this.authCookie.getUser() }
++  );
+ 
+   menuOpen = false;
+ 
+@@ -69,8 +78,13 @@ export class TopbarComponent {
+   }
+ 
+   logout(): void {
+-    // The shell can't clear Auth's own localStorage across origins, so
+-    // logout hands off to the Auth app itself, which owns that state.
++    // The cookie is shared across ports (see AuthCookieService), so the
++    // shell can clear it directly now instead of only handing off to Auth.
++    // We still hand off to Auth-Web's /login afterward — it owns the
++    // refresh-token localStorage entry and calls the real logout endpoint
++    // to invalidate that refresh token server-side, which the shell has no
++    // way to do itself.
++    document.cookie = 'mf_access_token=; path=/; max-age=0; SameSite=Lax';
+     window.location.href = `${remoteApps.auth.origin}/login`;
+   }
+ }
