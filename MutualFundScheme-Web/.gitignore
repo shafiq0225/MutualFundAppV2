@@ -6,6 +6,10 @@
 /out-tsc
 /bazel-out
 
+# Generated custom-elements bundle (npm run build:elements) — rebuilt on demand,
+# not checked in. Deploy alongside the standalone dist output.
+/public/elements
+
 # Node
 /node_modules
 npm-debug.log

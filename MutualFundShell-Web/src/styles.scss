@@ -1,0 +1,38 @@
+@use 'styles/variables' as *;
+@use 'ngx-toastr/toastr';
+@use '@fortawesome/fontawesome-free/css/all.min.css';
+
+// ── Passbook design tokens (mirror MutualFundScheme-Web / Investment-Web) ──
+:root {
+  --ink: #1B2A4A;
+  --ink-soft: #324268;
+  --parchment: #FAF6EC;
+  --paper: #FFFFFF;
+  --gain: #2F6F62;
+  --gain-soft: #E4EFEA;
+  --loss: #9C3B26;
+  --loss-soft: #F3E4DE;
+  --gold: #C08A2E;
+  --gold-soft: #F6ECD8;
+  --steel: #5C6EA8;
+  --steel-soft: #E7EAF4;
+  --line: #DCD3C1;
+  --line-soft: #EAE3D5;
+  --text-muted: #6B6455;
+
+  // Aliases used by shell-specific components (see placeholder/scheme-host)
+  --text-primary: var(--ink);
+  --danger: var(--loss);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  background: $page-bg;
+  overflow-x: hidden;
+  font-family: $font-family;
+  color: $text-primary;
+}
+
+a { text-decoration: none; color: $primary-light; }

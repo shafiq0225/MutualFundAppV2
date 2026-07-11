@@ -1,0 +1,22 @@
+<aside class="sidebar">
+  <div class="brand">
+    <i class="fas fa-building-columns"></i>
+    <span class="brand-text">MutualFund<em>Passbook</em></span>
+  </div>
+
+  <nav class="nav-list">
+    @for (item of navItems; track item.route) {
+      <a
+        class="nav-item"
+        [routerLink]="item.route"
+        routerLinkActive="active"
+      >
+        <i class="fas" [ngClass]="item.icon"></i>
+        <span class="label">{{ item.label }}</span>
+        @if (item.soon) {
+          <span class="badge">Soon</span>
+        }
+      </a>
+    }
+  </nav>
+</aside>

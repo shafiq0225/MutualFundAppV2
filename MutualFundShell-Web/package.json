@@ -1,13 +1,11 @@
 {
-  "name": "mutualfund-scheme-web",
+  "name": "mutualfund-shell-web",
   "version": "0.0.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "build:elements": "ng build --configuration elements",
     "watch": "ng build --watch --configuration development",
-    "watch:elements": "ng build --configuration elements --watch",
     "test": "ng test"
   },
   "prettier": {
@@ -33,7 +31,6 @@
     "@angular/platform-browser": "20.3.26",
     "@angular/router": "20.3.26",
     "@fortawesome/fontawesome-free": "^7.3.0",
-    "chart.js": "^4.5.1",
     "ngx-toastr": "^19.1.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
