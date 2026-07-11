@@ -73,6 +73,7 @@
               "outputHashing": "none",
               "polyfills": [],
               "styles": [],
+              "assets": [],
               "extractLicenses": false,
               "optimization": {
                 "scripts": true,
