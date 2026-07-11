@@ -9,7 +9,9 @@ import { WebComponentLoaderService } from '../../core/services/webcomponent-load
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     @if (ready()) {
-      <scheme-list-element></scheme-list-element>
+      <div class="page-container">
+        <scheme-list-element></scheme-list-element>
+      </div>
     } @else if (error()) {
       <div class="remote-error">
         <i class="fas fa-triangle-exclamation"></i>
