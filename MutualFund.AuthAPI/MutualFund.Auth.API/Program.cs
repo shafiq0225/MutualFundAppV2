@@ -8,6 +8,7 @@ using MutualFund.Auth.Infrastructure;
 using MutualFund.Auth.Infrastructure.Data;
 using MutualFund.Auth.API.Middleware;
 using MutualFund.Auth.API.Services;
+using MutualFund.Auth.Domain.Enums;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -84,6 +85,23 @@ builder.Services.AddAuthorization(options =>
 
     options.AddPolicy("AllRoles", policy =>
         policy.RequireAuthenticatedUser());
+
+    // Employee-delegable admin policies for THIS service (AuthAPI).
+    // Admin always passes (via the role check); an Employee only passes
+    // if they've been explicitly granted the matching permission via
+    // PermissionController (which stays AdminOnly — see below). Role
+    // changes (UpdateRole) and permission assignment itself are
+    // deliberately NOT delegable here — allowing an Employee to grant
+    // roles/permissions would let them escalate themselves to Admin.
+    options.AddPolicy("CanManageUsers", policy =>
+        policy.RequireAssertion(ctx =>
+            ctx.User.HasClaim("role", "Admin") ||
+            ctx.User.HasClaim("permissions", PermissionType.UserManage)));
+
+    options.AddPolicy("CanManageFamily", policy =>
+        policy.RequireAssertion(ctx =>
+            ctx.User.HasClaim("role", "Admin") ||
+            ctx.User.HasClaim("permissions", PermissionType.FamilyManage)));
 
     // Permission-based policies
     options.AddPolicy("CanReadSchemes", policy =>

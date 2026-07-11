@@ -142,9 +142,6 @@
       ],
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer"
-      },
-      "RouteClaimsRequirement": {
-        "role": "Admin"
       }
     },
     {
@@ -181,9 +178,6 @@
       ],
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer"
-      },
-      "RouteClaimsRequirement": {
-        "role": "Admin"
       }
     },
     {
@@ -202,9 +196,6 @@
       ],
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer"
-      },
-      "RouteClaimsRequirement": {
-        "role": "Admin"
       }
     },
     {
@@ -244,9 +235,6 @@
       ],
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer"
-      },
-      "RouteClaimsRequirement": {
-        "role": "Admin"
       }
     },
     {
@@ -265,9 +253,6 @@
       ],
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer"
-      },
-      "RouteClaimsRequirement": {
-        "role": "Admin"
       }
     },
     {
@@ -370,9 +355,6 @@
       ],
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer"
-      },
-      "RouteClaimsRequirement": {
-        "role": "Admin"
       }
     },
     {
@@ -391,9 +373,6 @@
       ],
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer"
-      },
-      "RouteClaimsRequirement": {
-        "role": "Admin"
       }
     },
     {
@@ -412,9 +391,6 @@
       ],
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer"
-      },
-      "RouteClaimsRequirement": {
-        "role": "Admin"
       }
     },
     {
@@ -433,9 +409,6 @@
       ],
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer"
-      },
-      "RouteClaimsRequirement": {
-        "role": "Admin"
       }
     },
     {
@@ -454,9 +427,6 @@
       ],
       "AuthenticationOptions": {
         "AuthenticationProviderKey": "Bearer"
-      },
-      "RouteClaimsRequirement": {
-        "role": "Admin"
       }
     },
     {

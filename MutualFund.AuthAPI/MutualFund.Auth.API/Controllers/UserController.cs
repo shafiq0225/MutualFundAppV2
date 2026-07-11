@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using MutualFund.Auth.Application.DTOs.User;
 using MutualFund.Auth.Application.UseCases.Commands;
@@ -31,10 +31,10 @@ namespace MutualFund.Auth.API.Controllers
         }
 
         /// <summary>
-        /// Get all users. Admin only.
+        /// Get all users. Admin, or Employee granted user.manage.
         /// </summary>
         [HttpGet]
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "CanManageUsers")]
         public async Task<IActionResult> GetAll()
         {
             var users = await _query.GetAllAsync();
@@ -42,10 +42,10 @@ namespace MutualFund.Auth.API.Controllers
         }
 
         /// <summary>
-        /// Get user by ID. Admin only.
+        /// Get user by ID. Admin, or Employee granted user.manage.
         /// </summary>
         [HttpGet("{userId}")]
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "CanManageUsers")]
         public async Task<IActionResult> GetById(string userId)
         {
             var user = await _query.GetByIdAsync(userId);
@@ -53,10 +53,11 @@ namespace MutualFund.Auth.API.Controllers
         }
 
         /// <summary>
-        /// Get all pending approval requests. Admin only.
+        /// Get all pending approval requests. Admin, or Employee granted
+        /// user.manage.
         /// </summary>
         [HttpGet("pending")]
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "CanManageUsers")]
         public async Task<IActionResult> GetPending()
         {
             var users = await _query.GetPendingAsync();
@@ -64,10 +65,11 @@ namespace MutualFund.Auth.API.Controllers
         }
 
         /// <summary>
-        /// Approve a pending user registration. Admin only.
+        /// Approve a pending user registration. Admin, or Employee
+        /// granted user.manage.
         /// </summary>
         [HttpPut("{userId}/approve")]
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "CanManageUsers")]
         public async Task<IActionResult> Approve(string userId)
         {
             var adminId = GetCurrentUserId();
@@ -76,10 +78,11 @@ namespace MutualFund.Auth.API.Controllers
         }
 
         /// <summary>
-        /// Reject a pending user registration. Admin only.
+        /// Reject a pending user registration. Admin, or Employee
+        /// granted user.manage.
         /// </summary>
         [HttpPut("{userId}/reject")]
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "CanManageUsers")]
         public async Task<IActionResult> Reject(
             string userId, [FromBody] RejectUserDto dto)
         {
@@ -90,7 +93,9 @@ namespace MutualFund.Auth.API.Controllers
         }
 
         /// <summary>
-        /// Update a user's role. Admin only.
+        /// Update a user's role. Admin only — deliberately NOT delegable
+        /// to Employees, since granting this would let an Employee
+        /// escalate themselves (or anyone) to Admin.
         /// </summary>
         [HttpPut("{userId}/role")]
         [Authorize(Policy = "AdminOnly")]

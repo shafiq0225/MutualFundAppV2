@@ -9,7 +9,9 @@ namespace MutualFund.Auth.API.Controllers
 {
     [ApiController]
     [Route("api/family")]
-    [Authorize(Policy = "AdminOnly")]
+    // Admin always passes; an Employee passes if granted family.manage
+    // (see PermissionController — assignment itself stays Admin-only).
+    [Authorize(Policy = "CanManageFamily")]
     public class FamilyController : ControllerBase
     {
         private readonly GetFamilyGroupsQuery _query;
