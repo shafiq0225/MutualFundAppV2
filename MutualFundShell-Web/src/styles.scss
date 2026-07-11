@@ -1,4 +1,9 @@
 @use 'styles/variables' as *;
+@use 'styles/mixins' as *;
+@use 'styles/typography';
+@use 'styles/buttons';
+@use 'styles/forms';
+@use 'styles/tables';
 @use 'ngx-toastr/toastr';
 @use '@fortawesome/fontawesome-free/css/all.min.css';
 

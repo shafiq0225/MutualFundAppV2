@@ -69,7 +69,10 @@
             "elements": {
               "index": false,
               "browser": "src/main.elements.ts",
-              "outputPath": "public/elements",
+              "outputPath": {
+                "base": "public/elements",
+                "browser": ""
+              },
               "outputHashing": "none",
               "polyfills": [],
               "styles": [],

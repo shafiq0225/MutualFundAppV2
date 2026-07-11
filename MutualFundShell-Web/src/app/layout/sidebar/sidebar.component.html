@@ -1,7 +1,9 @@
-<aside class="sidebar">
+<aside class="sidebar" [class.collapsed]="layout.sidebarCollapsed()">
   <div class="brand">
     <i class="fas fa-building-columns"></i>
-    <span class="brand-text">MutualFund<em>Passbook</em></span>
+    @if (!layout.sidebarCollapsed()) {
+      <span class="brand-text">MutualFund<em>Passbook</em></span>
+    }
   </div>
 
   <nav class="nav-list">
@@ -10,13 +12,25 @@
         class="nav-item"
         [routerLink]="item.route"
         routerLinkActive="active"
+        [title]="layout.sidebarCollapsed() ? item.label : ''"
       >
         <i class="fas" [ngClass]="item.icon"></i>
-        <span class="label">{{ item.label }}</span>
-        @if (item.soon) {
-          <span class="badge">Soon</span>
+        @if (!layout.sidebarCollapsed()) {
+          <span class="label">{{ item.label }}</span>
+          @if (item.soon) {
+            <span class="badge">Soon</span>
+          }
         }
       </a>
     }
   </nav>
+
+  <button
+    class="collapse-toggle"
+    type="button"
+    (click)="layout.toggleSidebar()"
+    [title]="layout.sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+  >
+    <i class="fas" [ngClass]="layout.sidebarCollapsed() ? 'fa-angles-right' : 'fa-angles-left'"></i>
+  </button>
 </aside>

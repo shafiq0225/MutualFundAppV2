@@ -1,6 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { LayoutStateService } from '../../core/services/layout-state.service';
 
 interface NavItem {
   label: string;
@@ -18,6 +19,8 @@ interface NavItem {
   styleUrl: './sidebar.component.scss'
 })
 export class SidebarComponent {
+  readonly layout = inject(LayoutStateService);
+
   readonly navItems: NavItem[] = [
     { label: 'Dashboard', icon: 'fa-gauge-high', route: '/dashboard', soon: true },
     { label: 'User', icon: 'fa-user', route: '/user', soon: true },
