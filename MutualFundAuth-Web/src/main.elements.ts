@@ -20,7 +20,6 @@
 // initialNavigation() dance that scheme-nav-element required. Each is
 // just createCustomElement() directly, same as scheme-list-element.
 
-import 'zone.js';
 import { createApplication } from '@angular/platform-browser';
 import { createCustomElement } from '@angular/elements';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
@@ -32,6 +31,18 @@ import { PendingComponent } from './app/features/users/pending/pending.component
 import { FamilyComponent } from './app/features/family/family.component';
 import { LoginComponent } from './app/features/login/login.component';
 import { authInterceptor } from './app/core/interceptors/auth.interceptor';
+
+// Every remote bundles its own copy of zone.js. If another remote already
+// loaded on this page first, a plain `import 'zone.js'` here throws
+// ("Zone already loaded") and aborts this WHOLE module before it ever
+// reaches customElements.define() — silently breaking this remote. Guard
+// it so remotes can load in any order. Same pattern used in Scheme-Web's
+// main.elements.ts — apply it in any future remote's main.elements.ts too.
+async function ensureZoneJs(): Promise<void> {
+  if (!(window as unknown as { Zone?: unknown }).Zone) {
+    await import('zone.js');
+  }
+}
 
 const sharedProviders = [
   provideHttpClient(withInterceptors([authInterceptor])),
@@ -79,9 +90,11 @@ async function registerAuthLoginElement(): Promise<void> {
   customElements.define('auth-login-element', element);
 }
 
-Promise.all([
-  registerAuthUsersElement(),
-  registerAuthPendingElement(),
-  registerAuthFamilyElement(),
-  registerAuthLoginElement()
-]).catch((err) => console.error('Failed to register auth elements', err));
+ensureZoneJs()
+  .then(() => Promise.all([
+    registerAuthUsersElement(),
+    registerAuthPendingElement(),
+    registerAuthFamilyElement(),
+    registerAuthLoginElement()
+  ]))
+  .catch((err) => console.error('Failed to register auth elements', err));

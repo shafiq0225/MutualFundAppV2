@@ -16,4 +16,10 @@
 .shell-content {
   flex: 1;
   padding: v.$page-padding;
+
+  &.full-bleed {
+    padding: 0;
+    display: flex;
+    min-height: 100vh;
+  }
 }

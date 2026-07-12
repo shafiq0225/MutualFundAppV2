@@ -12,16 +12,14 @@ import { remoteApps } from '../../core/config/remote.config';
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
   template: `
     @if (ready()) {
-      <div class="page-container">
-        <!-- auth-login-element dispatches loginSuccess / switchToRegister as
-             native CustomEvents (that's how Angular Elements maps @Output),
-             so these bindings work even though this is an unknown element
-             as far as the shell's own compiler is concerned. -->
-        <auth-login-element
-          (loginSuccess)="onLoginSuccess()"
-          (switchToRegister)="onSwitchToRegister()">
-        </auth-login-element>
-      </div>
+      <!-- auth-login-element dispatches loginSuccess / switchToRegister as
+           native CustomEvents (that's how Angular Elements maps @Output),
+           so these bindings work even though this is an unknown element
+           as far as the shell's own compiler is concerned. -->
+      <auth-login-element
+        (loginSuccess)="onLoginSuccess()"
+        (switchToRegister)="onSwitchToRegister()">
+      </auth-login-element>
     } @else if (error()) {
       <div class="remote-error">
         <i class="fas fa-triangle-exclamation"></i>

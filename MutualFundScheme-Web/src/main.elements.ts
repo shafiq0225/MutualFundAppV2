@@ -12,7 +12,6 @@
 // means each router's initial navigation is tied only to its own element's
 // mount timing.
 
-import 'zone.js';
 import { createApplication } from '@angular/platform-browser';
 import { createCustomElement } from '@angular/elements';
 import { provideRouter } from '@angular/router';
@@ -26,6 +25,20 @@ import { NavComponent } from './app/features/nav/nav.component';
 import { SchemeDetailsComponent } from './app/features/scheme-details/scheme-details.component';
 import { SchemeNavRootComponent } from './app/elements-shell/scheme-nav-root.component';
 import { MemoryLocationStrategy } from './app/elements-shell/memory-location-strategy';
+
+// Every remote bundles its own copy of zone.js. If another remote already
+// loaded on this page first (e.g. the shell loads Auth's login screen,
+// then the user navigates to /scheme), a plain `import 'zone.js'` here
+// throws ("Zone already loaded") and aborts this WHOLE module before it
+// ever reaches customElements.define() — silently breaking this remote
+// with no visible error except a console warning easy to miss. Guarding
+// it means remotes can load in any order. Apply this same guard in any
+// future remote's main.elements.ts too.
+async function ensureZoneJs(): Promise<void> {
+  if (!(window as unknown as { Zone?: unknown }).Zone) {
+    await import('zone.js');
+  }
+}
 
 async function registerSchemeListElement(): Promise<void> {
   if (customElements.get('scheme-list-element')) return;
@@ -75,7 +88,9 @@ async function registerSchemeNavElement(): Promise<void> {
   customElements.define('scheme-nav-element', element);
 }
 
-Promise.all([
-  registerSchemeListElement(),
-  registerSchemeNavElement()
-]).catch((err) => console.error('Failed to register scheme elements', err));
+ensureZoneJs()
+  .then(() => Promise.all([
+    registerSchemeListElement(),
+    registerSchemeNavElement()
+  ]))
+  .catch((err) => console.error('Failed to register scheme elements', err));

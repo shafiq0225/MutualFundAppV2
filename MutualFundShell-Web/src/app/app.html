@@ -1,9 +1,13 @@
 <div class="shell-layout">
-  <shell-sidebar></shell-sidebar>
+  @if (showChrome()) {
+    <shell-sidebar></shell-sidebar>
+  }
 
   <div class="shell-main">
-    <shell-topbar></shell-topbar>
-    <div class="shell-content">
+    @if (showChrome()) {
+      <shell-topbar></shell-topbar>
+    }
+    <div class="shell-content" [class.full-bleed]="!showChrome()">
       <router-outlet></router-outlet>
     </div>
   </div>

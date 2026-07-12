@@ -1,7 +1,18 @@
-import { Component } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Component, inject } from '@angular/core';
+import { RouterOutlet, Router, NavigationEnd } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map, startWith } from 'rxjs';
 import { SidebarComponent } from './layout/sidebar/sidebar.component';
 import { TopbarComponent } from './layout/topbar/topbar.component';
+
+// Routes that render full-bleed with no sidebar/topbar chrome. Written as
+// prefix checks so a future full-page auth route (password reset, etc.)
+// can opt in the same way — just add its prefix here.
+const CHROME_LESS_PREFIXES = ['/login'];
+
+function isChromeLess(url: string): boolean {
+  return CHROME_LESS_PREFIXES.some((prefix) => url.startsWith(prefix));
+}
 
 @Component({
   selector: 'shell-root',
@@ -10,4 +21,15 @@ import { TopbarComponent } from './layout/topbar/topbar.component';
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
-export class ShellRoot {}
+export class ShellRoot {
+  private readonly router = inject(Router);
+
+  showChrome = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map((e) => !isChromeLess(e.urlAfterRedirects)),
+      startWith(!isChromeLess(this.router.url))
+    ),
+    { initialValue: !isChromeLess(this.router.url) }
+  );
+}
