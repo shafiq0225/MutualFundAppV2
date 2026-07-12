@@ -34,6 +34,8 @@ export interface RegisterResponseDto {
 export class RegisterComponent {
   registerForm: FormGroup;
   isLoading = false;
+  showPassword = false;
+  showConfirmPassword = false;
   private readonly authApi = `${environment.authApiUrl}/api/auth`;
 
   constructor(

@@ -24,6 +24,7 @@ export class LoginComponent {
 
   loginForm: FormGroup;
   isLoading = false;
+  showPassword = false;
 
   private readonly router = inject(Router, { optional: true });
 
