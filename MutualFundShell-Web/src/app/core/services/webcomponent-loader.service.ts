@@ -18,7 +18,11 @@ export class WebComponentLoaderService {
 
     let pending = this.loaded.get(cacheKey);
     if (!pending) {
-      pending = this.injectScript(config);
+      const tasks: Promise<void>[] = [this.injectScript(config)];
+      if (config.stylesBundle) {
+        tasks.push(this.injectStylesheet(config.origin + config.stylesBundle));
+      }
+      pending = Promise.all(tasks).then(() => undefined);
       this.loaded.set(cacheKey, pending);
     }
     return pending;
@@ -40,6 +44,28 @@ export class WebComponentLoaderService {
       script.onload = () => resolve();
       script.onerror = () => reject(new Error(`Failed to load remote bundle: ${url}`));
       document.head.appendChild(script);
+    });
+  }
+
+  // Each remote's own global styles.scss defines the utility classes
+  // (buttons, modals, tables, etc.) its templates rely on — those never
+  // get bundled per-component, so without this an embedded remote renders
+  // with no design-system styling at all even though the script loaded fine.
+  private injectStylesheet(url: string): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      const existing = document.querySelector(`link[data-remote-href="${url}"]`);
+      if (existing) {
+        resolve();
+        return;
+      }
+
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = url;
+      link.dataset['remoteHref'] = url;
+      link.onload = () => resolve();
+      link.onerror = () => reject(new Error(`Failed to load remote stylesheet: ${url}`));
+      document.head.appendChild(link);
     });
   }
 }

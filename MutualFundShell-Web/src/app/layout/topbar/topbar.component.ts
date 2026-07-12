@@ -6,7 +6,6 @@ import { toSignal } from '@angular/core/rxjs-interop';
 
 import { LayoutStateService } from '../../core/services/layout-state.service';
 import { AuthCookieService } from '../../core/services/auth-cookie.service';
-import { remoteApps } from '../../core/config/remote.config';
 
 @Component({
   selector: 'shell-topbar',
@@ -78,13 +77,20 @@ export class TopbarComponent {
   }
 
   logout(): void {
+    // Stay inside the shell — /login renders auth-login-element, the same
+    // embedded login used for the shell's start page (see app.routes.ts /
+    // LoginHostComponent). Previously this redirected out to Auth-Web's
+    // own origin, which took the user out of the shell entirely.
+    //
     // The cookie is shared across ports (see AuthCookieService), so the
-    // shell can clear it directly now instead of only handing off to Auth.
-    // We still hand off to Auth-Web's /login afterward — it owns the
-    // refresh-token localStorage entry and calls the real logout endpoint
-    // to invalidate that refresh token server-side, which the shell has no
-    // way to do itself.
+    // shell can clear it directly rather than depending on Auth-Web to do
+    // it. Known gap: this doesn't invalidate the refresh token server-side
+    // (that call needs the refresh token, which only lives in Auth-Web's
+    // own localStorage, not in anything the shell can read) — the access
+    // cookie being gone is enough to gate the shell and every embedded
+    // remote, but the refresh token itself stays valid until it expires.
     document.cookie = 'mf_access_token=; path=/; max-age=0; SameSite=Lax';
-    window.location.href = `${remoteApps.auth.origin}/login`;
+    this.menuOpen = false;
+    this.router.navigateByUrl('/login');
   }
 }

@@ -9,7 +9,7 @@ import { LoginHostComponent } from './features/auth-host/login-host.component';
 import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
 
   { path: 'login', component: LoginHostComponent, title: 'Login' },
 
