@@ -85,11 +85,43 @@ export class AuthService {
   }
 
   private checkAuthStatus(): void {
+    this.isAuthenticatedSubject.next(this.hasValidToken());
+  }
+
+  /**
+   * Token PRESENCE isn't the same as token VALIDITY. A token can sit in
+   * localStorage from a previous session after it's expired server-side —
+   * that's exactly what causes API calls to 401 while isLoggedIn() still
+   * naively returned true. This decodes the JWT's `exp` claim and treats
+   * a missing, malformed, or expired token as logged-out, clearing it so
+   * it doesn't keep tripping the same check later.
+   */
+  private hasValidToken(): boolean {
     const token = this.getAccessToken();
-    this.isAuthenticatedSubject.next(!!token);
+    if (!token) return false;
+
+    const expiry = this.getTokenExpiry(token);
+    if (expiry === null || expiry * 1000 <= Date.now()) {
+      this.clearTokens();
+      return false;
+    }
+    return true;
+  }
+
+  private getTokenExpiry(token: string): number | null {
+    try {
+      const payload = token.split('.')[1];
+      if (!payload) return null;
+      const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const json = atob(normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '='));
+      const claims = JSON.parse(json);
+      return typeof claims.exp === 'number' ? claims.exp : null;
+    } catch {
+      return null;
+    }
   }
 
   isLoggedIn(): boolean {
-    return this.isAuthenticatedSubject.value;
+    return this.hasValidToken();
   }
 }

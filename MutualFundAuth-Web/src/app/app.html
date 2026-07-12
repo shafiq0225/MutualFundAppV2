@@ -1,10 +1,10 @@
 <div class="standalone-topbar">
   <span class="brand display">User & Family Management</span>
   <nav class="standalone-nav">
-    <a routerLink="/users" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">All Users</a>
-    <a routerLink="/users/pending" routerLinkActive="active">Pending Approvals</a>
-    <a routerLink="/family" routerLinkActive="active">Family Groups</a>
-    <div class="nav-divider"></div>
+    <a routerLink="/users" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" *ngIf="isAuthenticated$ | async">All Users</a>
+    <a routerLink="/users/pending" routerLinkActive="active" *ngIf="isAuthenticated$ | async">Pending Approvals</a>
+    <a routerLink="/family" routerLinkActive="active" *ngIf="isAuthenticated$ | async">Family Groups</a>
+    <div class="nav-divider" *ngIf="isAuthenticated$ | async"></div>
     <a routerLink="/login" routerLinkActive="active" *ngIf="!(isAuthenticated$ | async)">Login</a>
     <a routerLink="/register" routerLinkActive="active" *ngIf="!(isAuthenticated$ | async)">Register</a>
     <a (click)="logout()" *ngIf="isAuthenticated$ | async" class="logout-link">Logout</a>

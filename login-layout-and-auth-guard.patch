@@ -1,0 +1,81 @@
+diff --git a/MutualFundAuth-Web/src/app/app.html b/MutualFundAuth-Web/src/app/app.html
+index ddccaf3..f8a15f8 100644
+--- a/MutualFundAuth-Web/src/app/app.html
++++ b/MutualFundAuth-Web/src/app/app.html
+@@ -1,10 +1,10 @@
+ <div class="standalone-topbar">
+   <span class="brand display">User & Family Management</span>
+   <nav class="standalone-nav">
+-    <a routerLink="/users" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}">All Users</a>
+-    <a routerLink="/users/pending" routerLinkActive="active">Pending Approvals</a>
+-    <a routerLink="/family" routerLinkActive="active">Family Groups</a>
+-    <div class="nav-divider"></div>
++    <a routerLink="/users" routerLinkActive="active" [routerLinkActiveOptions]="{exact:true}" *ngIf="isAuthenticated$ | async">All Users</a>
++    <a routerLink="/users/pending" routerLinkActive="active" *ngIf="isAuthenticated$ | async">Pending Approvals</a>
++    <a routerLink="/family" routerLinkActive="active" *ngIf="isAuthenticated$ | async">Family Groups</a>
++    <div class="nav-divider" *ngIf="isAuthenticated$ | async"></div>
+     <a routerLink="/login" routerLinkActive="active" *ngIf="!(isAuthenticated$ | async)">Login</a>
+     <a routerLink="/register" routerLinkActive="active" *ngIf="!(isAuthenticated$ | async)">Register</a>
+     <a (click)="logout()" *ngIf="isAuthenticated$ | async" class="logout-link">Logout</a>
+diff --git a/MutualFundAuth-Web/src/app/core/services/auth.service.ts b/MutualFundAuth-Web/src/app/core/services/auth.service.ts
+index 284b8f3..bafc276 100644
+--- a/MutualFundAuth-Web/src/app/core/services/auth.service.ts
++++ b/MutualFundAuth-Web/src/app/core/services/auth.service.ts
+@@ -85,11 +85,43 @@ export class AuthService {
+   }
+ 
+   private checkAuthStatus(): void {
++    this.isAuthenticatedSubject.next(this.hasValidToken());
++  }
++
++  /**
++   * Token PRESENCE isn't the same as token VALIDITY. A token can sit in
++   * localStorage from a previous session after it's expired server-side —
++   * that's exactly what causes API calls to 401 while isLoggedIn() still
++   * naively returned true. This decodes the JWT's `exp` claim and treats
++   * a missing, malformed, or expired token as logged-out, clearing it so
++   * it doesn't keep tripping the same check later.
++   */
++  private hasValidToken(): boolean {
+     const token = this.getAccessToken();
+-    this.isAuthenticatedSubject.next(!!token);
++    if (!token) return false;
++
++    const expiry = this.getTokenExpiry(token);
++    if (expiry === null || expiry * 1000 <= Date.now()) {
++      this.clearTokens();
++      return false;
++    }
++    return true;
++  }
++
++  private getTokenExpiry(token: string): number | null {
++    try {
++      const payload = token.split('.')[1];
++      if (!payload) return null;
++      const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
++      const json = atob(normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '='));
++      const claims = JSON.parse(json);
++      return typeof claims.exp === 'number' ? claims.exp : null;
++    } catch {
++      return null;
++    }
+   }
+ 
+   isLoggedIn(): boolean {
+-    return this.isAuthenticatedSubject.value;
++    return this.hasValidToken();
+   }
+ }
+diff --git a/MutualFundShell-Web/src/app/app.scss b/MutualFundShell-Web/src/app/app.scss
+index 832e5ac..1735e7c 100644
+--- a/MutualFundShell-Web/src/app/app.scss
++++ b/MutualFundShell-Web/src/app/app.scss
+@@ -19,7 +19,5 @@
+ 
+   &.full-bleed {
+     padding: 0;
+-    display: flex;
+-    min-height: 100vh;
+   }
+ }
