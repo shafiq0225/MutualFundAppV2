@@ -1,59 +1,105 @@
 {
-  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
-  "version": 1,
-  "newProjectRoot": "projects",
-  "projects": {
-    "mutualfund-shell-web": {
-      "projectType": "application",
-      "schematics": {
-        "@schematics/angular:component": { "style": "scss" }
-      },
-      "root": "",
-      "sourceRoot": "src",
-      "prefix": "shell",
-      "architect": {
-        "build": {
-          "builder": "@angular/build:application",
-          "options": {
-            "outputPath": "dist/mutualfund-shell-web",
-            "index": "src/index.html",
-            "browser": "src/main.ts",
-            "polyfills": ["zone.js"],
-            "tsConfig": "tsconfig.app.json",
-            "assets": [
-              { "glob": "**/*", "input": "public" }
-            ],
-            "styles": ["src/styles.scss"],
-            "scripts": []
-          },
-          "configurations": {
-            "production": {
-              "budgets": [
-                { "type": "initial", "maximumWarning": "600kB", "maximumError": "1.2MB" },
-                { "type": "anyComponentStyle", "maximumWarning": "8kB", "maximumError": "16kB" }
-              ],
-              "outputHashing": "all"
-            },
-            "development": {
-              "optimization": false,
-              "extractLicenses": false,
-              "sourceMap": true
-            }
-          },
-          "defaultConfiguration": "production"
-        },
-        "serve": {
-          "builder": "@angular/build:dev-server",
-          "options": {
-            "port": 4200
-          },
-          "configurations": {
-            "production": { "buildTarget": "mutualfund-shell-web:build:production" },
-            "development": { "buildTarget": "mutualfund-shell-web:build:development" }
-          },
-          "defaultConfiguration": "development"
-        }
-      }
-    }
-  }
+	"$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+	"version": 1,
+	"newProjectRoot": "projects",
+	"projects": {
+		"mutualfund-shell-web": {
+			"projectType": "application",
+			"schematics": {
+				"@schematics/angular:component": {
+					"style": "scss"
+				}
+			},
+			"root": "",
+			"sourceRoot": "src",
+			"prefix": "shell",
+			"architect": {
+				"build": {
+					"builder": "@angular-architects/native-federation:build",
+					"options": {},
+					"configurations": {
+						"production": {
+							"target": "mutualfund-shell-web:esbuild:production"
+						},
+						"development": {
+							"target": "mutualfund-shell-web:esbuild:development",
+							"dev": true
+						}
+					},
+					"defaultConfiguration": "production"
+				},
+				"serve": {
+					"builder": "@angular-architects/native-federation:build",
+					"options": {
+						"target": "mutualfund-shell-web:serve-original:development",
+						"rebuildDelay": 500,
+						"dev": true,
+						"cacheExternalArtifacts": false,
+						"port": 0
+					}
+				},
+				"esbuild": {
+					"builder": "@angular/build:application",
+					"options": {
+						"outputPath": "dist/mutualfund-shell-web",
+						"index": "src/index.html",
+						"browser": "src/main.ts",
+						"polyfills": [
+							"zone.js",
+							"es-module-shims"
+						],
+						"tsConfig": "tsconfig.app.json",
+						"assets": [
+							{
+								"glob": "**/*",
+								"input": "public"
+							}
+						],
+						"styles": [
+							"src/styles.scss"
+						],
+						"scripts": []
+					},
+					"configurations": {
+						"production": {
+							"budgets": [
+								{
+									"type": "initial",
+									"maximumWarning": "600kB",
+									"maximumError": "1.2MB"
+								},
+								{
+									"type": "anyComponentStyle",
+									"maximumWarning": "8kB",
+									"maximumError": "16kB"
+								}
+							],
+							"outputHashing": "all"
+						},
+						"development": {
+							"optimization": false,
+							"extractLicenses": false,
+							"sourceMap": true
+						}
+					},
+					"defaultConfiguration": "production"
+				},
+				"serve-original": {
+					"builder": "@angular/build:dev-server",
+					"options": {
+						"port": 4200
+					},
+					"configurations": {
+						"production": {
+							"buildTarget": "mutualfund-shell-web:esbuild:production"
+						},
+						"development": {
+							"buildTarget": "mutualfund-shell-web:esbuild:development"
+						}
+					},
+					"defaultConfiguration": "development"
+				}
+			}
+		}
+	}
 }

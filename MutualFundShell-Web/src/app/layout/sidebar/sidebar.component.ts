@@ -28,7 +28,7 @@ export class SidebarComponent {
     { label: 'Family Groups', icon: 'fa-people-roof', route: '/family-groups', soon: false },
     { label: 'Scheme', icon: 'fa-list-check', route: '/scheme', soon: false },
     { label: 'NAV Comparison', icon: 'fa-chart-line', route: '/nav-comparison', soon: false },
-    { label: 'Orders', icon: 'fa-receipt', route: '/orders', soon: true },
-    { label: 'Portfolio', icon: 'fa-wallet', route: '/portfolio', soon: true }
+    { label: 'Orders', icon: 'fa-receipt', route: '/orders', soon: false },
+    { label: 'Portfolio', icon: 'fa-wallet', route: '/portfolio', soon: false }
   ];
 }

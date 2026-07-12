@@ -18,6 +18,10 @@ export interface AuthUser {
 export class AuthCookieService {
   private static readonly COOKIE_NAME = 'mf_access_token';
 
+  getToken(): string | null {
+    return this.readCookie(AuthCookieService.COOKIE_NAME);
+  }
+
   getUser(): AuthUser | null {
     const token = this.readCookie(AuthCookieService.COOKIE_NAME);
     if (!token) return null;

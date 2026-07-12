@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { loadRemoteModule } from '@angular-architects/native-federation';
 import { PlaceholderComponent } from './features/placeholder/placeholder.component';
 import { SchemeListHostComponent } from './features/scheme-host/scheme-list-host.component';
 import { SchemeNavHostComponent } from './features/scheme-host/scheme-nav-host.component';
@@ -15,17 +16,43 @@ export const routes: Routes = [
   { path: 'login', component: LoginHostComponent, title: 'Login' },
   { path: 'register', component: RegisterHostComponent, title: 'Register' },
 
-  // Functional today
+  // Functional today — Scheme/NAV/User/Pending/Family are Web Components
+  // (each bootstraps its own isolated Angular app, see their
+  // main.elements.ts). Orders/Portfolio are Module Federation instead —
+  // MutualFundInvestment-Web exposes these two standalone components
+  // directly (see its federation.config.js) and they're hosted inside
+  // THIS app's own router-outlet/injector, not an isolated one. That's
+  // why they needed the shell's own auth interceptor (see
+  // core/interceptors/auth.interceptor.ts) rather than relying on
+  // Investment-Web's own — that one never runs in this context.
   { path: 'scheme', component: SchemeListHostComponent, title: 'Scheme Management', canActivate: [authGuard] },
   { path: 'nav-comparison', component: SchemeNavHostComponent, title: 'NAV Comparison', canActivate: [authGuard] },
   { path: 'user', component: UsersHostComponent, title: 'User', canActivate: [authGuard] },
   { path: 'pending-approvals', component: PendingHostComponent, title: 'Pending Approvals', canActivate: [authGuard] },
   { path: 'family-groups', component: FamilyHostComponent, title: 'Family Groups', canActivate: [authGuard] },
+  {
+    path: 'orders',
+    title: 'Orders',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      loadRemoteModule({
+        remoteName: 'mutualfund-investment-web',
+        exposedModule: './Orders'
+      }).then((m) => m.OrdersComponent)
+  },
+  {
+    path: 'portfolio',
+    title: 'Portfolio',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      loadRemoteModule({
+        remoteName: 'mutualfund-investment-web',
+        exposedModule: './Portfolio'
+      }).then((m) => m.InvestorComponent)
+  },
 
   // Placeholders — reserved in the sidebar, not yet wired to a remote
   { path: 'dashboard', component: PlaceholderComponent, data: { title: 'Dashboard' }, title: 'Dashboard', canActivate: [authGuard] },
-  { path: 'orders', component: PlaceholderComponent, data: { title: 'Orders' }, title: 'Orders', canActivate: [authGuard] },
-  { path: 'portfolio', component: PlaceholderComponent, data: { title: 'Portfolio' }, title: 'Portfolio', canActivate: [authGuard] },
 
   { path: '**', redirectTo: 'dashboard' }
 ];
