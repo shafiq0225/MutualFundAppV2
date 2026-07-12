@@ -70,8 +70,7 @@ export class LoginHostComponent implements OnInit {
   }
 
   onSwitchToRegister(): void {
-    // Registration isn't a "logged in" action and isn't embedded (see
-    // main.elements.ts) — hand off to the standalone Auth-Web app itself.
-    window.location.href = `${remoteApps.auth.origin}/register`;
+    // Registration is now embedded as a web component, navigate within shell
+    this.router.navigate(['/register']);
   }
 }

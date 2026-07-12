@@ -6,12 +6,14 @@ import { UsersHostComponent } from './features/auth-host/users-host.component';
 import { PendingHostComponent } from './features/auth-host/pending-host.component';
 import { FamilyHostComponent } from './features/auth-host/family-host.component';
 import { LoginHostComponent } from './features/auth-host/login-host.component';
+import { RegisterHostComponent } from './features/auth-host/register-host.component';
 import { authGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
 
   { path: 'login', component: LoginHostComponent, title: 'Login' },
+  { path: 'register', component: RegisterHostComponent, title: 'Register' },
 
   // Functional today
   { path: 'scheme', component: SchemeListHostComponent, title: 'Scheme Management', canActivate: [authGuard] },

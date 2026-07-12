@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, EventEmitter, Output, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -32,16 +32,22 @@ export interface RegisterResponseDto {
   styleUrl: './register.component.scss'
 })
 export class RegisterComponent {
+  // Router is optional for MFE integration - when embedded as auth-register-element,
+  // it emits registerSuccess/switchToLogin outputs instead of using router directly
+  @Output() registerSuccess = new EventEmitter<void>();
+  @Output() switchToLogin = new EventEmitter<void>();
+
   registerForm: FormGroup;
   isLoading = false;
   showPassword = false;
   showConfirmPassword = false;
   private readonly authApi = `${environment.authApiUrl}/api/auth`;
 
+  private readonly router = inject(Router, { optional: true });
+
   constructor(
     private fb: FormBuilder,
     private http: HttpClient,
-    private router: Router,
     private toastr: ToastrService
   ) {
     this.registerForm = this.fb.group({
@@ -74,7 +80,10 @@ export class RegisterComponent {
         this.isLoading = false;
         this.toastr.success(response.message || 'Registration successful. Please wait for admin approval.');
         setTimeout(() => {
-          this.router.navigate(['/login']);
+          if (this.router) {
+            this.router.navigate(['/login']);
+          }
+          this.registerSuccess.emit();
         }, 1500);
       },
       error: (error) => {
@@ -88,6 +97,9 @@ export class RegisterComponent {
   }
 
   goToLogin(): void {
-    this.router.navigate(['/login']);
+    if (this.router) {
+      this.router.navigate(['/login']);
+    }
+    this.switchToLogin.emit();
   }
 }

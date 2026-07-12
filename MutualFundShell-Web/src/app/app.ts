@@ -8,7 +8,7 @@ import { TopbarComponent } from './layout/topbar/topbar.component';
 // Routes that render full-bleed with no sidebar/topbar chrome. Written as
 // prefix checks so a future full-page auth route (password reset, etc.)
 // can opt in the same way — just add its prefix here.
-const CHROME_LESS_PREFIXES = ['/login'];
+const CHROME_LESS_PREFIXES = ['/login', '/register'];
 
 function isChromeLess(url: string): boolean {
   return CHROME_LESS_PREFIXES.some((prefix) => url.startsWith(prefix));

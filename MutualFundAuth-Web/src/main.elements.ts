@@ -30,6 +30,7 @@ import { UsersComponent } from './app/features/users/users.component';
 import { PendingComponent } from './app/features/users/pending/pending.component';
 import { FamilyComponent } from './app/features/family/family.component';
 import { LoginComponent } from './app/features/login/login.component';
+import { RegisterComponent } from './app/features/register/register.component';
 import { authInterceptor } from './app/core/interceptors/auth.interceptor';
 
 // Every remote bundles its own copy of zone.js. If another remote already
@@ -90,11 +91,24 @@ async function registerAuthLoginElement(): Promise<void> {
   customElements.define('auth-login-element', element);
 }
 
+async function registerAuthRegisterElement(): Promise<void> {
+  if (customElements.get('auth-register-element')) return;
+
+  // RegisterComponent's Router dependency is optional (see register.component.ts)
+  // so it doesn't need a router provided here — it emits registerSuccess /
+  // switchToLogin outputs instead, which the shell's RegisterHostComponent
+  // listens for and turns into real shell navigation.
+  const app = await createApplication({ providers: sharedProviders });
+  const element = createCustomElement(RegisterComponent, { injector: app.injector });
+  customElements.define('auth-register-element', element);
+}
+
 ensureZoneJs()
   .then(() => Promise.all([
     registerAuthUsersElement(),
     registerAuthPendingElement(),
     registerAuthFamilyElement(),
-    registerAuthLoginElement()
+    registerAuthLoginElement(),
+    registerAuthRegisterElement()
   ]))
   .catch((err) => console.error('Failed to register auth elements', err));
