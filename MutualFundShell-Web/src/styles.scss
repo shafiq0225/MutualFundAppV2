@@ -175,3 +175,31 @@ a { text-decoration: none; color: $primary-light; }
     border-radius: $card-radius;
   }
 }
+
+// ── Auth MFE alignment override ────────────────────────────────────
+// Auth-Web (User/Pending/Family) uses its own `.wrap` container — a
+// max-width + centered + asymmetric-padding layout — instead of the
+// edge-to-edge `.page-container` Scheme/NAV use, and `.page-head` adds
+// its own top margin on top of that. shell-content already provides
+// uniform padding for every embedded remote, so together these stack
+// extra, uneven spacing that doesn't match Scheme/NAV once embedded here.
+//
+// Scoped under `shell-root` (the shell app's actual root tag) rather than
+// left as plain `.wrap`/`.page-head`: Auth's own stylesheet is injected
+// into <head> at runtime, AFTER this file's styles are already on the
+// page, so for two rules with equal specificity Auth's later-loaded one
+// would otherwise win the cascade no matter what order they're written in
+// here. The extra `shell-root` ancestor gives this rule higher specificity
+// so it wins regardless of load order.
+//
+// This only applies inside the shell — Auth-Web's own standalone app at
+// :4202 never loads this stylesheet, so its layout there is untouched.
+shell-root .wrap {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+shell-root .page-head {
+  margin-top: 0;
+}
