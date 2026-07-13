@@ -35,9 +35,9 @@ export class SidebarComponent {
 
   private readonly allNavItems: NavItem[] = [
     { label: 'Dashboard', icon: 'fa-gauge-high', route: '/dashboard', soon: true },
-    { label: 'User', icon: 'fa-user', route: '/user', soon: false },
-    { label: 'Pending Approvals', icon: 'fa-hourglass-half', route: '/pending-approvals', soon: false },
-    { label: 'Family Groups', icon: 'fa-people-roof', route: '/family-groups', soon: false },
+    { label: 'User', icon: 'fa-user', route: '/user', soon: false, requiresPermission: 'user.manage' },
+    { label: 'Pending Approvals', icon: 'fa-hourglass-half', route: '/pending-approvals', soon: false, requiresPermission: 'user.manage' },
+    { label: 'Family Groups', icon: 'fa-people-roof', route: '/family-groups', soon: false, requiresPermission: 'family.manage' },
     { label: 'Scheme', icon: 'fa-list-check', route: '/scheme', soon: false, requiresPermission: 'scheme.manage' },
     { label: 'NAV Comparison', icon: 'fa-chart-line', route: '/nav-comparison', soon: false },
     { label: 'Orders', icon: 'fa-receipt', route: '/orders', soon: false },

@@ -27,9 +27,9 @@ export const routes: Routes = [
   // Investment-Web's own — that one never runs in this context.
   { path: 'scheme', component: SchemeListHostComponent, title: 'Scheme Management', canActivate: [authGuard, requiresPermission('scheme.manage')] },
   { path: 'nav-comparison', component: SchemeNavHostComponent, title: 'NAV Comparison', canActivate: [authGuard] },
-  { path: 'user', component: UsersHostComponent, title: 'User', canActivate: [authGuard] },
-  { path: 'pending-approvals', component: PendingHostComponent, title: 'Pending Approvals', canActivate: [authGuard] },
-  { path: 'family-groups', component: FamilyHostComponent, title: 'Family Groups', canActivate: [authGuard] },
+  { path: 'user', component: UsersHostComponent, title: 'User', canActivate: [authGuard, requiresPermission('user.manage')] },
+  { path: 'pending-approvals', component: PendingHostComponent, title: 'Pending Approvals', canActivate: [authGuard, requiresPermission('user.manage')] },
+  { path: 'family-groups', component: FamilyHostComponent, title: 'Family Groups', canActivate: [authGuard, requiresPermission('family.manage')] },
   {
     path: 'orders',
     title: 'Orders',
