@@ -102,32 +102,6 @@ builder.Services.AddAuthorization(options =>
         policy.RequireAssertion(ctx =>
             ctx.User.HasClaim("role", "Admin") ||
             ctx.User.HasClaim("permissions", PermissionType.FamilyManage)));
-
-    // Permission-based policies
-    options.AddPolicy("CanReadSchemes", policy =>
-        policy.RequireAssertion(ctx =>
-            ctx.User.HasClaim("role", "Admin") ||
-            ctx.User.HasClaim("permissions", "scheme.read")));
-
-    options.AddPolicy("CanCreateSchemes", policy =>
-        policy.RequireAssertion(ctx =>
-            ctx.User.HasClaim("role", "Admin") ||
-            ctx.User.HasClaim("permissions", "scheme.create")));
-
-    options.AddPolicy("CanUpdateSchemes", policy =>
-        policy.RequireAssertion(ctx =>
-            ctx.User.HasClaim("role", "Admin") ||
-            ctx.User.HasClaim("permissions", "scheme.update")));
-
-    options.AddPolicy("CanApproveFunds", policy =>
-        policy.RequireAssertion(ctx =>
-            ctx.User.HasClaim("role", "Admin") ||
-            ctx.User.HasClaim("permissions", "fund.approval")));
-
-    options.AddPolicy("CanReadNav", policy =>
-        policy.RequireAssertion(ctx =>
-            ctx.User.HasClaim("role", "Admin") ||
-            ctx.User.HasClaim("permissions", "nav.read")));
 });
 
 // ── Swagger with JWT Support ──────────────────────────────────────

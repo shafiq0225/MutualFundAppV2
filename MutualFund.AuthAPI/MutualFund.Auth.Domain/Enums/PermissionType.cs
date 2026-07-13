@@ -6,16 +6,10 @@
     /// </summary>
     public static class PermissionType
     {
-        // SchemeEnrollment permissions
-        public const string SchemeRead = "scheme.read";
-        public const string SchemeCreate = "scheme.create";
-        public const string SchemeUpdate = "scheme.update";
-
-        // Fund Approval permissions
-        public const string FundApproval = "fund.approval";
-
-        // NAV Comparison permissions
-        public const string NavRead = "nav.read";
+        // SchemeEnrollment feature (includes fund approval) — single
+        // blanket permission by design: an Employee either has access to
+        // manage scheme enrollment or doesn't, no separate read/write tiers.
+        public const string SchemeManage = "scheme.manage";
 
         // User Management — Admin only
         public const string UserManage = "user.manage";
@@ -25,11 +19,7 @@
 
         public static IEnumerable<string> GetAll() =>
         [
-            SchemeRead,
-            SchemeCreate,
-            SchemeUpdate,
-            FundApproval,
-            NavRead,
+            SchemeManage,
             UserManage,
             FamilyManage
         ];

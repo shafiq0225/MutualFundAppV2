@@ -176,11 +176,7 @@ namespace MutualFund.Auth.Infrastructure.Data
 
             // ── Seed Permissions ─────────────────────────────────────
             builder.Entity<Permission>().HasData(
-                new Permission { Id = 1, Code = "scheme.read", Name = "Read Schemes", Description = "View scheme enrollment data", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-                new Permission { Id = 2, Code = "scheme.create", Name = "Create Schemes", Description = "Enroll new schemes", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-                new Permission { Id = 3, Code = "scheme.update", Name = "Update Schemes", Description = "Update scheme enrollment status", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-                new Permission { Id = 4, Code = "fund.approval", Name = "Fund Approval", Description = "Approve or disable fund-level schemes", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-                new Permission { Id = 5, Code = "nav.read", Name = "Read NAV Data", Description = "View NAV comparison data", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+                new Permission { Id = 1, Code = "scheme.manage", Name = "Manage Scheme Enrollment", Description = "Enroll, update, and approve schemes/funds", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
                 new Permission { Id = 6, Code = "user.manage", Name = "Manage Users", Description = "Approve, reject and manage user accounts", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
                 new Permission { Id = 7, Code = "family.manage", Name = "Manage Family Groups", Description = "Create and manage family groups", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
             );

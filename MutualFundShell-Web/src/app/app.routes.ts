@@ -8,7 +8,7 @@ import { PendingHostComponent } from './features/auth-host/pending-host.componen
 import { FamilyHostComponent } from './features/auth-host/family-host.component';
 import { LoginHostComponent } from './features/auth-host/login-host.component';
 import { RegisterHostComponent } from './features/auth-host/register-host.component';
-import { authGuard } from './core/guards/auth.guard';
+import { authGuard, requiresPermission } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -25,7 +25,7 @@ export const routes: Routes = [
   // why they needed the shell's own auth interceptor (see
   // core/interceptors/auth.interceptor.ts) rather than relying on
   // Investment-Web's own — that one never runs in this context.
-  { path: 'scheme', component: SchemeListHostComponent, title: 'Scheme Management', canActivate: [authGuard] },
+  { path: 'scheme', component: SchemeListHostComponent, title: 'Scheme Management', canActivate: [authGuard, requiresPermission('scheme.manage')] },
   { path: 'nav-comparison', component: SchemeNavHostComponent, title: 'NAV Comparison', canActivate: [authGuard] },
   { path: 'user', component: UsersHostComponent, title: 'User', canActivate: [authGuard] },
   { path: 'pending-approvals', component: PendingHostComponent, title: 'Pending Approvals', canActivate: [authGuard] },

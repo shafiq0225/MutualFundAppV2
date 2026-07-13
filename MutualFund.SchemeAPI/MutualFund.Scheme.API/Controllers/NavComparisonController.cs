@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
 using MutualFund.Scheme.Application.UseCases.Queries;
 using MutualFund.Scheme.Domain.Exceptions;
@@ -7,6 +8,7 @@ namespace MutualFund.Scheme.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(Policy = "AllRoles")]
     public class NavComparisonController : ControllerBase
     {
         private readonly GetNavComparisonQuery _query;
@@ -81,7 +83,14 @@ namespace MutualFund.Scheme.API.Controllers
             return Ok(cachedDetail);
         }
 
+        /// <summary>
+        /// Force-clear the daily NAV comparison cache. Admin only — this
+        /// isn't a read, it's a manual trigger for expensive DB reloads,
+        /// so it's deliberately not open to Employees/End Users the way
+        /// the reads above are.
+        /// </summary>
         [HttpPost("daily/refresh")]
+        [Authorize(Policy = "AdminOnly")]
         public IActionResult RefreshDailyCache()
         {
             _cache.Remove(DAILY_CACHE_KEY);

@@ -16,7 +16,7 @@ import { createApplication } from '@angular/platform-browser';
 import { createCustomElement } from '@angular/elements';
 import { provideRouter } from '@angular/router';
 import { LocationStrategy } from '@angular/common';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideToastr } from 'ngx-toastr';
 
@@ -25,6 +25,7 @@ import { NavComponent } from './app/features/nav/nav.component';
 import { SchemeDetailsComponent } from './app/features/scheme-details/scheme-details.component';
 import { SchemeNavRootComponent } from './app/elements-shell/scheme-nav-root.component';
 import { MemoryLocationStrategy } from './app/elements-shell/memory-location-strategy';
+import { authInterceptor } from './app/core/interceptors/auth.interceptor';
 
 // Every remote bundles its own copy of zone.js. If another remote already
 // loaded on this page first (e.g. the shell loads Auth's login screen,
@@ -45,7 +46,7 @@ async function registerSchemeListElement(): Promise<void> {
 
   const app = await createApplication({
     providers: [
-      provideHttpClient(),
+      provideHttpClient(withInterceptors([authInterceptor])),
       provideAnimations(),
       provideToastr({
         timeOut: 3500,
@@ -64,7 +65,7 @@ async function registerSchemeNavElement(): Promise<void> {
 
   const app = await createApplication({
     providers: [
-      provideHttpClient(),
+      provideHttpClient(withInterceptors([authInterceptor])),
       provideAnimations(),
       provideToastr({
         timeOut: 3500,

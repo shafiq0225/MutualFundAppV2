@@ -38,6 +38,28 @@ export class AuthCookieService {
     return { name, email: claims['email'] as string | undefined, raw: claims };
   }
 
+  isAdmin(): boolean {
+    return this.getUser()?.raw['role'] === 'Admin';
+  }
+
+  /**
+   * Checks the "permissions" claim. AuthAPI's TokenService adds one
+   * `Claim("permissions", code)` per granted permission — after JWT
+   * decoding that comes back as a single string if there's exactly one,
+   * an array if there are several, or the key is simply absent if there
+   * are none, so all three shapes need handling here.
+   */
+  hasPermission(code: string): boolean {
+    const permissions = this.getUser()?.raw['permissions'];
+    if (!permissions) return false;
+    return Array.isArray(permissions) ? permissions.includes(code) : permissions === code;
+  }
+
+  /** Admin always passes; an Employee passes only with the named permission. */
+  canManage(permissionCode: string): boolean {
+    return this.isAdmin() || this.hasPermission(permissionCode);
+  }
+
   private readCookie(name: string): string | null {
     const match = document.cookie
       .split('; ')

@@ -1,4 +1,8 @@
-﻿using MutualFund.Scheme.Application;
+﻿using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using MutualFund.Scheme.Application;
 using MutualFund.Scheme.Infrastructure;
 using MutualFund.Scheme.Infrastructure.Data;
 using MutualFund.Scheme.API.Middleware;
@@ -25,13 +29,95 @@ try
     // ── API ────────────────────────────────────────────────────────────────
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
+
+    // ── JWT Authentication ───────────────────────────────────────────────
+    // Same SecretKey/Issuer/Audience as MutualFund.AuthAPI — this service
+    // only validates tokens AuthAPI issues, it never issues its own.
+    var jwtSection = builder.Configuration.GetSection("JwtSettings");
+    var secretKey = jwtSection["SecretKey"]!;
+    var issuer = jwtSection["Issuer"]!;
+    var audience = jwtSection["Audience"]!;
+
+    builder.Services
+        .AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme =
+                JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultChallengeScheme =
+                JwtBearerDefaults.AuthenticationScheme;
+        })
+        .AddJwtBearer(options =>
+        {
+            // Prevents ASP.NET Core from remapping "role" to the long URI
+            // claim type — RequireClaim("role", ...) below depends on the
+            // raw "role" claim name AuthAPI's TokenService actually issues.
+            options.MapInboundClaims = false;
+
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(secretKey)),
+                ValidateIssuer = true,
+                ValidIssuer = issuer,
+                ValidateAudience = true,
+                ValidAudience = audience,
+                ValidateLifetime = true,
+                ClockSkew = TimeSpan.Zero
+            };
+        });
+
+    // ── Authorization Policies ───────────────────────────────────────────
+    builder.Services.AddAuthorization(options =>
+    {
+        // NAV Comparison + Scheme Details + Holiday Status: any
+        // authenticated user — Admin, Employee, and End User (Head of
+        // Family / Members) all see these.
+        options.AddPolicy("AllRoles", policy =>
+            policy.RequireAuthenticatedUser());
+
+        options.AddPolicy("AdminOnly", policy =>
+            policy.RequireClaim("role", "Admin"));
+
+        // Scheme Enrollment feature (view/create/update) + Fund Approval:
+        // Admin always passes; an Employee passes only if explicitly
+        // granted scheme.manage via AuthAPI's PermissionController. One
+        // blanket permission by design — not split into separate
+        // read/write/approve grants.
+        options.AddPolicy("CanManageSchemeEnrollment", policy =>
+            policy.RequireAssertion(ctx =>
+                ctx.User.HasClaim("role", "Admin") ||
+                ctx.User.HasClaim("permissions", "scheme.manage")));
+    });
+
     builder.Services.AddSwaggerGen(c =>
     {
-        c.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+        c.SwaggerDoc("v1", new OpenApiInfo
         {
             Title = "MutualFundNav SchemeAPI",
             Version = "v1",
             Description = "Scheme Enrollment, Fund Approval and NAV Comparison API"
+        });
+
+        var securityScheme = new OpenApiSecurityScheme
+        {
+            Name = "Authorization",
+            Description = "Enter: Bearer {your JWT token}",
+            In = ParameterLocation.Header,
+            Type = SecuritySchemeType.ApiKey,
+            Scheme = "Bearer",
+            BearerFormat = "JWT",
+            Reference = new OpenApiReference
+            {
+                Id = JwtBearerDefaults.AuthenticationScheme,
+                Type = ReferenceType.SecurityScheme
+            }
+        };
+
+        c.AddSecurityDefinition(JwtBearerDefaults.AuthenticationScheme, securityScheme);
+        c.AddSecurityRequirement(new OpenApiSecurityRequirement
+        {
+            { securityScheme, Array.Empty<string>() }
         });
     });
 
@@ -82,6 +168,7 @@ try
         c.RoutePrefix = string.Empty;
     });
 
+    app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();
 

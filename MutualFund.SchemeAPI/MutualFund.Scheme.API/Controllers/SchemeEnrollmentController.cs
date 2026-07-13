@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using MutualFund.Scheme.Application.DTOs;
 using MutualFund.Scheme.Application.UseCases.Commands;
 using MutualFund.Scheme.Application.UseCases.Queries;
@@ -7,6 +8,13 @@ namespace MutualFund.Scheme.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    // Whole feature behind one blanket permission — Admin always has it;
+    // an Employee needs scheme.manage granted via AuthAPI's
+    // PermissionController. Includes the reads (GetAll/GetBySchemeCode/
+    // GetApproved) too — "Scheme Enrollment" is an Admin/Employee-only
+    // feature end to end, not visible to End Users at all (unlike NAV
+    // Comparison / Scheme Details, which are AllRoles in NavComparisonController).
+    [Authorize(Policy = "CanManageSchemeEnrollment")]
     public class SchemeEnrollmentController : ControllerBase
     {
         private readonly CreateSchemeEnrollmentCommand _createCommand;

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using MutualFund.Scheme.Application.UseCases.Commands;
 using MutualFund.Scheme.Domain.Exceptions;
 
@@ -6,6 +7,9 @@ namespace MutualFund.Scheme.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    // Fund approval is part of the same "Scheme Enrollment" feature bucket
+    // (one blanket switch), not a separately-grantable permission.
+    [Authorize(Policy = "CanManageSchemeEnrollment")]
     public class FundApprovalController : ControllerBase
     {
         private readonly UpdateFundApprovalCommand _command;

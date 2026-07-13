@@ -444,7 +444,7 @@
         }
       ],
       "AuthenticationOptions": {
-        "AuthenticationProviderKey": ""
+        "AuthenticationProviderKey": "Bearer"
       }
     },
     {
@@ -462,7 +462,7 @@
         }
       ],
       "AuthenticationOptions": {
-        "AuthenticationProviderKey": ""
+        "AuthenticationProviderKey": "Bearer"
       }
     },
     {
@@ -480,7 +480,7 @@
         }
       ],
       "AuthenticationOptions": {
-        "AuthenticationProviderKey": ""
+        "AuthenticationProviderKey": "Bearer"
       }
     },
     {
@@ -498,7 +498,7 @@
         }
       ],
       "AuthenticationOptions": {
-        "AuthenticationProviderKey": ""
+        "AuthenticationProviderKey": "Bearer"
       }
     },
     {
@@ -516,7 +516,7 @@
         }
       ],
       "AuthenticationOptions": {
-        "AuthenticationProviderKey": ""
+        "AuthenticationProviderKey": "Bearer"
       }
     },
     {
@@ -534,7 +534,7 @@
         }
       ],
       "AuthenticationOptions": {
-        "AuthenticationProviderKey": ""
+        "AuthenticationProviderKey": "Bearer"
       }
     },
     {
@@ -552,7 +552,7 @@
         }
       ],
       "AuthenticationOptions": {
-        "AuthenticationProviderKey": ""
+        "AuthenticationProviderKey": "Bearer"
       }
     },
     {
@@ -570,7 +570,7 @@
         }
       ],
       "AuthenticationOptions": {
-        "AuthenticationProviderKey": ""
+        "AuthenticationProviderKey": "Bearer"
       }
     },
     {
@@ -588,7 +588,7 @@
         }
       ],
       "AuthenticationOptions": {
-        "AuthenticationProviderKey": ""
+        "AuthenticationProviderKey": "Bearer"
       }
     },
     {
@@ -606,7 +606,7 @@
         }
       ],
       "AuthenticationOptions": {
-        "AuthenticationProviderKey": ""
+        "AuthenticationProviderKey": "Bearer"
       }
     },
     {
@@ -624,7 +624,7 @@
         }
       ],
       "AuthenticationOptions": {
-        "AuthenticationProviderKey": ""
+        "AuthenticationProviderKey": "Bearer"
       }
     },
     {
