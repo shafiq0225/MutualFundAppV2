@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using Confluent.Kafka;
@@ -29,6 +29,7 @@ namespace MutualFundNav.Infrastructure.Services
                 BrokerAddressFamily = BrokerAddressFamily.V4,
                 MessageMaxBytes = 20_971_520   // 20 MB — AMFI NAV file is ~1.6 MB uncompressed
             };
+            configuration.GetSection("Kafka").Bind(config);
 
             _producer = new ProducerBuilder<string, string>(config)
                 .SetErrorHandler((_, e) =>

@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using Confluent.Kafka;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -48,6 +48,7 @@ namespace MutualFund.Scheme.Infrastructure.Consumers
                 AutoOffsetReset = AutoOffsetReset.Earliest,
                 EnableAutoCommit = false
             };
+            _config.GetSection("Kafka").Bind(consumerConfig);
 
             using var consumer = new ConsumerBuilder<string, string>(consumerConfig).Build();
             consumer.Subscribe(topic);

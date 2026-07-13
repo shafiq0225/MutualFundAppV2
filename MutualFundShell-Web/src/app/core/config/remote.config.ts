@@ -1,6 +1,8 @@
 // Central registry of micro frontend origins.
 // Ports must stay exactly as-is — the backend/gateway CORS + cookie config
 // already depends on them. Do not change without updating Ocelot + APIs too.
+import { environment } from '../../../environments/environment';
+
 export interface RemoteAppConfig {
   /** Origin the app is served from (dev: ng serve port, prod: behind gateway/CDN). */
   origin: string;
@@ -15,6 +17,7 @@ export interface RemoteAppConfig {
    * loading this too, an embedded remote renders unstyled. Optional only
    * because a remote that has no elements of its own (investment/nav today)
    * has nothing to load either bundle for yet.
+   *
    */
   stylesBundle?: string;
   /** Custom element tag names this remote exposes. */
@@ -23,24 +26,24 @@ export interface RemoteAppConfig {
 
 export const remoteApps: Record<'scheme' | 'auth' | 'investment' | 'nav', RemoteAppConfig> = {
   scheme: {
-    origin: 'http://localhost:4205',
+    origin: environment.production ? 'https://shafiq0225-mutualfund-scheme.pages.dev' : 'http://localhost:4205',
     elementsBundle: '/elements/main.js',
     stylesBundle: '/elements/styles.css',
     tags: ['scheme-list-element', 'scheme-nav-element']
   },
   auth: {
-    origin: 'http://localhost:4202',
+    origin: environment.production ? 'https://shafiq0225-mutualfund-auth.pages.dev' : 'http://localhost:4202',
     elementsBundle: '/elements/main.js',
     stylesBundle: '/elements/styles.css',
     tags: ['auth-users-element', 'auth-pending-element', 'auth-family-element', 'auth-login-element']
   },
   investment: {
-    origin: 'http://localhost:4203',
+    origin: environment.production ? 'https://shafiq0225-mutualfund-investment.pages.dev' : 'http://localhost:4203',
     elementsBundle: '/elements/main.js',
     tags: []
   },
   nav: {
-    origin: 'http://localhost:4204',
+    origin: environment.production ? 'https://shafiq0225-mutualfund-nav.pages.dev' : 'http://localhost:4204',
     elementsBundle: '/elements/main.js',
     tags: []
   }

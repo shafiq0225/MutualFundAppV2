@@ -67,6 +67,47 @@ builder.Services.AddCors(options =>
 });
 
 // ── Ocelot ────────────────────────────────────────────────────────
+if (builder.Environment.IsProduction())
+{
+    var authHost = Environment.GetEnvironmentVariable("DOWNSTREAM_AUTH_HOST") ?? "mutualfund-auth-api.onrender.com";
+    var investmentHost = Environment.GetEnvironmentVariable("DOWNSTREAM_INVESTMENT_HOST") ?? "mutualfund-investment-api.onrender.com";
+    var schemeHost = Environment.GetEnvironmentVariable("DOWNSTREAM_SCHEME_HOST") ?? "mutualfund-scheme-api.onrender.com";
+    var navHost = Environment.GetEnvironmentVariable("DOWNSTREAM_NAV_HOST") ?? "mutualfund-nav-api.onrender.com";
+
+    foreach (var section in builder.Configuration.GetSection("Routes").GetChildren())
+    {
+        var downstreamHostPorts = section.GetSection("DownstreamHostAndPorts").GetChildren();
+        foreach (var hostPort in downstreamHostPorts)
+        {
+            var port = hostPort["Port"];
+            if (port == "7001")
+            {
+                hostPort["Host"] = authHost;
+                hostPort["Port"] = "443";
+                section["DownstreamScheme"] = "https";
+            }
+            else if (port == "7003")
+            {
+                hostPort["Host"] = investmentHost;
+                hostPort["Port"] = "443";
+                section["DownstreamScheme"] = "https";
+            }
+            else if (port == "63946")
+            {
+                hostPort["Host"] = schemeHost;
+                hostPort["Port"] = "443";
+                section["DownstreamScheme"] = "https";
+            }
+            else if (port == "63944")
+            {
+                hostPort["Host"] = navHost;
+                hostPort["Port"] = "443";
+                section["DownstreamScheme"] = "https";
+            }
+        }
+    }
+}
+
 builder.Services.AddOcelot(builder.Configuration);
 
 var app = builder.Build();
