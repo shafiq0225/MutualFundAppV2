@@ -44,6 +44,11 @@ namespace MutualFundNav.Infrastructure.Services
                 bool.TryParse(kafkaSection["EnableSslCertificateVerification"], out var verify))
                 config.EnableSslCertificateVerification = verify;
 
+            _logger.LogInformation("Kafka Init: User={User}, PwdLength={Len}, PwdPrefix={Prefix}", 
+                config.SaslUsername, 
+                config.SaslPassword?.Length ?? 0, 
+                config.SaslPassword?.Substring(0, Math.Min(5, config.SaslPassword?.Length ?? 0)));
+
             _producer = new ProducerBuilder<string, string>(config)
                 .SetErrorHandler((_, e) =>
                     _logger.LogError("Kafka producer error [{Code}]: {Reason}", e.Code, e.Reason))
