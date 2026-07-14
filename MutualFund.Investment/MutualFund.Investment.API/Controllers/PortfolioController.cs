@@ -1,4 +1,4 @@
-﻿using MutualFund.Investment.Application.Portfolio.Queries;
+using MutualFund.Investment.Application.Portfolio.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -52,7 +52,7 @@ namespace MutualFund.Investment.API.Controllers
         /// Admin/Employee only.
         /// </summary>
         [HttpGet("investor/{userId}")]
-        [Authorize(Policy = "AdminOrEmployee")]
+        [Authorize(Policy = "CanViewAllPortfolio")]
         public async Task<IActionResult> GetByInvestor(
             string userId,
             [FromQuery] string? investorName = null,
@@ -75,7 +75,7 @@ namespace MutualFund.Investment.API.Controllers
         /// Phase 1: All roles can see all investments.
         /// </summary>
         [HttpGet("family")]
-        [Authorize(Policy = "AnyRole")]
+        [Authorize(Policy = "CanViewInvestorPage")]
         public async Task<IActionResult> GetFamilyPortfolio(
             [FromQuery] DateTime? asOfDate = null)
         {
@@ -93,7 +93,7 @@ namespace MutualFund.Investment.API.Controllers
         /// Admin/Employee only — full list view.
         /// </summary>
         [HttpGet("holdings")]
-        [Authorize(Policy = "AdminOrEmployee")]
+        [Authorize(Policy = "CanViewAllPortfolio")]
         public async Task<IActionResult> GetAllHoldings()
         {
             var result = await _getAllHoldings.ExecuteAsync();

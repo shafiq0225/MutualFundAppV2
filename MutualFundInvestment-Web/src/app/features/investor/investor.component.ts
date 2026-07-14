@@ -8,6 +8,7 @@ import { catchError, map } from 'rxjs/operators';
 import { FamilyPortfolioService } from '../../core/services/family-portfolio.service';
 import { HoldingsService } from '../../core/services/holdings.service';
 import { AuthFamilyService } from '../../core/services/auth-family.service';
+import { AuthService } from '../../core/services/auth.service';
 import {
   FamilyOverviewDto,
   MemberSummaryDto,
@@ -127,7 +128,8 @@ export class InvestorComponent implements OnInit {
     private familyService: FamilyPortfolioService,
     private holdingsService: HoldingsService,
     private authFamilyService: AuthFamilyService,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    public auth: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -145,7 +147,9 @@ export class InvestorComponent implements OnInit {
       next: ({ overview, holdings }) => {
         this.overview = overview;
         this.allHoldings = holdings;
-        this.loadRelationships();
+        if (this.auth.currentUser()?.role !== 'User') {
+          this.loadRelationships();
+        }
         this.loadMemberCards(overview);
       },
       error: () => {

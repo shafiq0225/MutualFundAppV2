@@ -1,4 +1,4 @@
-﻿using MutualFund.Investment.Application.Family.Queries;
+using MutualFund.Investment.Application.Family.Queries;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,7 +6,7 @@ namespace MutualFund.Investment.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize]
+    [Authorize(Policy = "CanViewInvestorPage")]
     public class FamilyPortfolioController : BaseController
     {
         private readonly FamilyPortfolioQuery _query;
@@ -26,7 +26,6 @@ namespace MutualFund.Investment.API.Controllers
         /// Total family value + all members summary
         /// </summary>
         [HttpGet]
-        [Authorize(Policy = "AnyRole")]
         public async Task<IActionResult> GetFamilyOverview()
         {
             var result = await _query.GetFamilyOverviewAsync();
@@ -43,7 +42,6 @@ namespace MutualFund.Investment.API.Controllers
         /// One member's holdings with quick period returns
         /// </summary>
         [HttpGet("{userId}")]
-        [Authorize(Policy = "AnyRole")]
         public async Task<IActionResult> GetMemberHoldings(string userId)
         {
             // Non-admin can only see own holdings
@@ -64,7 +62,6 @@ namespace MutualFund.Investment.API.Controllers
         /// Full scheme detail: units, avg NAV, daily/weekly/period returns
         /// </summary>
         [HttpGet("{userId}/scheme/{schemeCode}")]
-        [Authorize(Policy = "AnyRole")]
         public async Task<IActionResult> GetSchemeDetail(
             string userId,
             string schemeCode)

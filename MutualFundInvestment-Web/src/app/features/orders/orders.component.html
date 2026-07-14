@@ -38,7 +38,7 @@
             </div>
           </div>
 
-          <button type="button" class="btn-gold" (click)="openNewOrderModal()">+ New order</button>
+          <button type="button" class="btn-gold" *ngIf="auth.canAddOrders()" (click)="openNewOrderModal()">+ New order</button>
         </div>
       </div>
 
@@ -189,7 +189,7 @@
       </ul>
 
       <!-- Next-step action -->
-      <div class="action-card" *ngIf="nextAction && selectedOrder.status !== 'Cancelled'">
+      <div class="action-card" *ngIf="auth.isAdmin() && nextAction && selectedOrder.status !== 'Cancelled'">
         <ng-container *ngIf="nextAction.key === 'Assigned'">
           <h4>Assign field staff</h4>
           <div class="field">

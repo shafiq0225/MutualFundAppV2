@@ -52,7 +52,7 @@
           <button type="button" class="date-range-clear" (click)="clearDateRange()">Clear</button>
         </div>
       </div>
-      <div>
+      <div *ngIf="auth.canRunSnapshot()">
         <div class="filter-label">Job Snapshot</div>
         <button type="button" class="snapshot-btn" (click)="triggerSnapshot()" [disabled]="isTriggeringSnapshot">
           {{ isTriggeringSnapshot ? 'Running…' : '↻ Run Snapshot' }}

@@ -40,8 +40,8 @@ export class SidebarComponent {
     { label: 'Family Groups', icon: 'fa-people-roof', route: '/family-groups', soon: false, requiresPermission: 'family.manage' },
     { label: 'Scheme', icon: 'fa-list-check', route: '/scheme', soon: false, requiresPermission: 'scheme.manage' },
     { label: 'NAV Comparison', icon: 'fa-chart-line', route: '/nav-comparison', soon: false },
-    { label: 'Orders', icon: 'fa-receipt', route: '/orders', soon: false },
-    { label: 'Portfolio', icon: 'fa-wallet', route: '/portfolio', soon: false }
+    { label: 'Orders', icon: 'fa-receipt', route: '/orders', soon: false, requiresPermission: 'order.view' },
+    { label: 'Portfolio', icon: 'fa-wallet', route: '/portfolio', soon: false, requiresPermission: 'investor.view' }
   ];
 
   // Recomputed on every NavigationEnd — same reasoning as TopbarComponent's

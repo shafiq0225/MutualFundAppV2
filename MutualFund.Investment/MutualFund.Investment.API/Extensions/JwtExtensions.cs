@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 
@@ -86,6 +86,42 @@ namespace MutualFund.Investment.API.Extensions
                         ctx.User.HasClaim("role", "Admin") ||
                         ctx.User.HasClaim("role", "Employee") ||
                         ctx.User.HasClaim("role", "User")));
+
+                options.AddPolicy("CanViewOrders", policy =>
+                    policy.RequireAssertion(ctx =>
+                        ctx.User.HasClaim("role", "Admin") ||
+                        ctx.User.HasClaim("permissions", "order.view")));
+
+                options.AddPolicy("CanCreateOrder", policy =>
+                    policy.RequireAssertion(ctx =>
+                        ctx.User.HasClaim("role", "Admin") ||
+                        (ctx.User.HasClaim("role", "Employee") &&
+                         ctx.User.HasClaim("permissions", "order.view") &&
+                         ctx.User.HasClaim("permissions", "order.add"))));
+
+                options.AddPolicy("CanViewAllOrders", policy =>
+                    policy.RequireAssertion(ctx =>
+                        ctx.User.HasClaim("role", "Admin") ||
+                        (ctx.User.HasClaim("role", "Employee") &&
+                         ctx.User.HasClaim("permissions", "order.view"))));
+
+                options.AddPolicy("CanViewInvestorPage", policy =>
+                    policy.RequireAssertion(ctx =>
+                        ctx.User.HasClaim("role", "Admin") ||
+                        ctx.User.HasClaim("permissions", "investor.view")));
+
+                options.AddPolicy("CanViewAllPortfolio", policy =>
+                    policy.RequireAssertion(ctx =>
+                        ctx.User.HasClaim("role", "Admin") ||
+                        (ctx.User.HasClaim("role", "Employee") &&
+                         ctx.User.HasClaim("permissions", "investor.view"))));
+
+                options.AddPolicy("CanRunSnapshot", policy =>
+                    policy.RequireAssertion(ctx =>
+                        ctx.User.HasClaim("role", "Admin") ||
+                        (ctx.User.HasClaim("role", "Employee") &&
+                         ctx.User.HasClaim("permissions", "investor.view") &&
+                         ctx.User.HasClaim("permissions", "investor.snapshot"))));
             });
 
             return services;

@@ -8,6 +8,7 @@ import { OrderService } from '../../core/services/order.service';
 import { SchemeService } from '../../core/services/scheme.service';
 import { AuthFamilyService } from '../../core/services/auth-family.service';
 import { AuthUserService } from '../../core/services/auth-user.service';
+import { AuthService } from '../../core/services/auth.service';
 import { InvestmentOrderDto, OrderStatus } from '../../core/models/order.model';
 import { SchemeEnrollmentDto } from '../../core/models/scheme.model';
 import { AuthFamilyMemberDto } from '../../core/models/auth-family.model';
@@ -72,7 +73,8 @@ export class OrdersComponent implements OnInit {
     private authFamilyService: AuthFamilyService,
     private authUserService: AuthUserService,
     private fb: FormBuilder,
-    private toastr: ToastrService
+    private toastr: ToastrService,
+    public auth: AuthService
   ) {}
 
   ngOnInit(): void {
@@ -98,21 +100,46 @@ export class OrdersComponent implements OnInit {
 
   loadAll(): void {
     this.loading = true;
+    const canAddOrders = this.auth.canAddOrders();
+    const isRegularUser = this.auth.currentUser()?.role === 'User';
 
-    forkJoin({
-      orders: this.orderService.getAll(),
-      schemes: this.schemeService.getApproved(),
-      investorUsers: this.authUserService.getInvestors()
-    }).subscribe({
-      next: ({ orders, schemes, investorUsers }) => {
-        this.orders = orders;
-        this.schemes = schemes;
-        this.investors = investorUsers.map(u => ({
-          userId: u.id,
-          fullName: u.fullName,
-          relation: ''
-        }));
-        this.loadRelationships();
+    const requests: any = {
+      orders: this.orderService.getAll()
+    };
+
+    if (canAddOrders) {
+      requests['schemes'] = this.schemeService.getApproved();
+    }
+    if (!isRegularUser) {
+      requests['investorUsers'] = this.authUserService.getInvestors();
+    }
+
+    forkJoin(requests).subscribe({
+      next: (res: any) => {
+        this.orders = res.orders;
+        
+        if (canAddOrders) {
+          this.schemes = res.schemes;
+        }
+
+        if (isRegularUser) {
+          const claims = this.auth.currentUser();
+          const fullName = ((claims?.firstName || '') + ' ' + (claims?.lastName || '')).trim() || 'Me';
+          this.investors = [{
+            userId: claims?.sub || '',
+            fullName: fullName,
+            relation: 'Self'
+          }];
+          this.investorFilter = claims?.sub || '';
+        } else {
+          this.investors = res.investorUsers.map((u: any) => ({
+            userId: u.id,
+            fullName: u.fullName,
+            relation: ''
+          }));
+          this.loadRelationships();
+        }
+
         this.applyFilters();
         this.loading = false;
       },

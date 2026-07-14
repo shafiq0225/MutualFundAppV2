@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using MutualFund.Auth.Domain.Entities;
@@ -178,7 +178,11 @@ namespace MutualFund.Auth.Infrastructure.Data
             builder.Entity<Permission>().HasData(
                 new Permission { Id = 1, Code = "scheme.manage", Name = "Manage Scheme Enrollment", Description = "Enroll, update, and approve schemes/funds", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
                 new Permission { Id = 6, Code = "user.manage", Name = "Manage Users", Description = "Approve, reject and manage user accounts", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
-                new Permission { Id = 7, Code = "family.manage", Name = "Manage Family Groups", Description = "Create and manage family groups", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
+                new Permission { Id = 7, Code = "family.manage", Name = "Manage Family Groups", Description = "Create and manage family groups", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+                new Permission { Id = 8, Code = "order.view", Name = "Manage Orders", Description = "View and manage orders", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+                new Permission { Id = 9, Code = "order.add", Name = "Add Orders", Description = "Log new orders", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+                new Permission { Id = 10, Code = "investor.view", Name = "Manage Investor Reports", Description = "View investor/portfolio reports", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+                new Permission { Id = 11, Code = "investor.snapshot", Name = "Run Investor Snapshot", Description = "Run investor portfolio snapshot job", CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
             );
 
             // ── Rename Identity tables (optional — cleaner names) ────

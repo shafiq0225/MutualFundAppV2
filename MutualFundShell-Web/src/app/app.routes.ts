@@ -33,7 +33,7 @@ export const routes: Routes = [
   {
     path: 'orders',
     title: 'Orders',
-    canActivate: [authGuard],
+    canActivate: [authGuard, requiresPermission('order.view')],
     loadComponent: () =>
       loadRemoteModule({
         remoteName: 'mutualfund-investment-web',
@@ -43,7 +43,7 @@ export const routes: Routes = [
   {
     path: 'portfolio',
     title: 'Portfolio',
-    canActivate: [authGuard],
+    canActivate: [authGuard, requiresPermission('investor.view')],
     loadComponent: () =>
       loadRemoteModule({
         remoteName: 'mutualfund-investment-web',

@@ -35,7 +35,41 @@ export class AuthService {
   }
 
   getAccessToken(): string | null {
-    return localStorage.getItem(TOKEN_KEY);
+    return this.readCookie('mf_access_token') || localStorage.getItem(TOKEN_KEY);
+  }
+
+  private readCookie(name: string): string | null {
+    if (typeof document === 'undefined') return null;
+    const match = document.cookie
+      .split('; ')
+      .find((row) => row.startsWith(name + '='));
+    return match ? decodeURIComponent(match.split('=').slice(1).join('=')) : null;
+  }
+
+  isAdmin(): boolean {
+    return this.currentUser()?.role === 'Admin';
+  }
+
+  isEmployee(): boolean {
+    return this.currentUser()?.role === 'Employee';
+  }
+
+  hasPermission(code: string): boolean {
+    const permissions = this.currentUser()?.permissions;
+    if (!permissions) return false;
+    return Array.isArray(permissions) ? permissions.includes(code) : permissions === code;
+  }
+
+  canManage(permissionCode: string): boolean {
+    return this.isAdmin() || this.hasPermission(permissionCode);
+  }
+
+  canAddOrders(): boolean {
+    return this.isAdmin() || (this.isEmployee() && this.hasPermission('order.view') && this.hasPermission('order.add'));
+  }
+
+  canRunSnapshot(): boolean {
+    return this.isAdmin() || (this.isEmployee() && this.hasPermission('investor.view') && this.hasPermission('investor.snapshot'));
   }
 
   isAuthenticated(): boolean {
@@ -50,8 +84,10 @@ export class AuthService {
     const claims = this.decodeToken(token);
     // Drop expired tokens on load rather than pretending they're valid
     if (claims && claims.exp * 1000 <= Date.now()) {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(REFRESH_KEY);
+      if (localStorage.getItem(TOKEN_KEY)) {
+        localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(REFRESH_KEY);
+      }
       return null;
     }
     return claims;

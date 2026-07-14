@@ -1,4 +1,4 @@
-﻿using MutualFund.Investment.Application.Orders.Commands;
+using MutualFund.Investment.Application.Orders.Commands;
 using MutualFund.Investment.Application.Orders.Dtos;
 using MutualFund.Investment.Application.Orders.Queries;
 using Microsoft.AspNetCore.Authorization;
@@ -37,7 +37,7 @@ namespace MutualFund.Investment.API.Controllers
         /// User: own orders only.
         /// </summary>
         [HttpGet]
-        [Authorize(Policy = "AnyRole")]
+        [Authorize(Policy = "CanViewOrders")]
         public async Task<IActionResult> GetAll(
             [FromQuery] string? status = null,
             [FromQuery] string? investorId = null)
@@ -65,7 +65,7 @@ namespace MutualFund.Investment.API.Controllers
         /// Get single investment order by Id.
         /// </summary>
         [HttpGet("{id:int}")]
-        [Authorize(Policy = "AnyRole")]
+        [Authorize(Policy = "CanViewOrders")]
         public async Task<IActionResult> GetById(int id)
         {
             // ← single int parameter
@@ -88,7 +88,7 @@ namespace MutualFund.Investment.API.Controllers
         /// Head of Family calls Admin → Admin fills this form.
         /// </summary>
         [HttpPost]
-        [Authorize(Policy = "AdminOnly")]
+        [Authorize(Policy = "CanCreateOrder")]
         public async Task<IActionResult> Create(
             [FromBody] CreateOrderDto dto)
         {
@@ -139,7 +139,7 @@ namespace MutualFund.Investment.API.Controllers
         /// Admin/Employee only.
         /// </summary>
         [HttpGet("investor/{userId}")]
-        [Authorize(Policy = "AdminOrEmployee")]
+        [Authorize(Policy = "CanViewAllOrders")]
         public async Task<IActionResult> GetByInvestor(string userId)
         {
             // ← investorIdFilter = userId, no status filter

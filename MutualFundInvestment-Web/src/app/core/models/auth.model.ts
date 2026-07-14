@@ -16,4 +16,5 @@ export interface DecodedTokenClaims {
   firstName?: string;
   lastName?: string;
   exp: number;
+  permissions?: string | string[];
 }

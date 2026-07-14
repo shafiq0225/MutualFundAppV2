@@ -1,4 +1,5 @@
-﻿using MutualFund.Investment.Application.Portfolio.Commands;
+using MutualFund.Investment.Application.Portfolio.Commands;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Quartz;
 
@@ -10,6 +11,7 @@ namespace MutualFund.Investment.API.Controllers
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class JobsController : ControllerBase
     {
         private readonly CalculateSnapshotCommand _snapshotCommand;
@@ -31,6 +33,7 @@ namespace MutualFund.Investment.API.Controllers
         /// Useful for testing or recalculating after NAV update.
         /// </summary>
         [HttpPost("snapshot")]
+        [Authorize(Policy = "CanRunSnapshot")]
         public async Task<IActionResult> TriggerSnapshot(
             [FromQuery] DateTime? date = null)
         {
@@ -68,6 +71,7 @@ namespace MutualFund.Investment.API.Controllers
         /// even registered), which masked the underlying scheduling bug.
         /// </summary>
         [HttpGet("status")]
+        [Authorize(Policy = "CanViewInvestorPage")]
         public async Task<IActionResult> Status()
         {
             var scheduler = await _schedulerFactory.GetScheduler();

@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -9,6 +9,7 @@ using MutualFund.Auth.Infrastructure.Data;
 using MutualFund.Auth.API.Middleware;
 using MutualFund.Auth.API.Services;
 using MutualFund.Auth.Domain.Enums;
+using MutualFund.Auth.Domain.Entities;
 using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -168,6 +169,24 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await db.Database.MigrateAsync();
+
+    // Seed new permissions programmatically on startup
+    var newPerms = new[]
+    {
+        new Permission { Code = "order.view", Name = "Manage Orders", Description = "View and manage orders", CreatedAt = DateTime.UtcNow },
+        new Permission { Code = "order.add", Name = "Add Orders", Description = "Log new orders", CreatedAt = DateTime.UtcNow },
+        new Permission { Code = "investor.view", Name = "Manage Investor Reports", Description = "View investor/portfolio reports", CreatedAt = DateTime.UtcNow },
+        new Permission { Code = "investor.snapshot", Name = "Run Investor Snapshot", Description = "Run investor portfolio snapshot job", CreatedAt = DateTime.UtcNow }
+    };
+
+    foreach (var perm in newPerms)
+    {
+        if (!await db.Permissions.AnyAsync(p => p.Code == perm.Code))
+        {
+            db.Permissions.Add(perm);
+        }
+    }
+    await db.SaveChangesAsync();
 }
 await AdminSeedService.SeedAdminAsync(app.Services, app.Configuration);
 

@@ -181,13 +181,26 @@ export class UsersComponent implements OnInit {
   togglePermission(code: string): void {
     if (!this.selectedUser || this.permBusy) return;
     this.permBusy = true;
+    const userId = this.selectedUser.id;
 
     if (this.hasPermission(code)) {
-      this.permissionService.revoke({ userId: this.selectedUser.id, permissionCode: code }).subscribe({
+      const codesToRevoke: string[] = [code];
+
+      if (code === 'order.view' && this.hasPermission('order.add')) {
+        codesToRevoke.push('order.add');
+      } else if (code === 'investor.view' && this.hasPermission('investor.snapshot')) {
+        codesToRevoke.push('investor.snapshot');
+      }
+
+      const requests = codesToRevoke.map(c =>
+        this.permissionService.revoke({ userId, permissionCode: c })
+      );
+
+      forkJoin(requests).subscribe({
         next: () => {
-          this.userPermCodes = this.userPermCodes.filter(c => c !== code);
+          this.userPermCodes = this.userPermCodes.filter(c => !codesToRevoke.includes(c));
           this.permBusy = false;
-          this.toastr.info(`Permission '${code}' revoked.`);
+          codesToRevoke.forEach(c => this.toastr.info(`Permission '${c}' revoked.`));
         },
         error: () => {
           this.permBusy = false;
@@ -195,11 +208,23 @@ export class UsersComponent implements OnInit {
         }
       });
     } else {
-      this.permissionService.assign({ userId: this.selectedUser.id, permissionCode: code }).subscribe({
+      const codesToAssign: string[] = [code];
+
+      if (code === 'order.add' && !this.hasPermission('order.view')) {
+        codesToAssign.push('order.view');
+      } else if (code === 'investor.snapshot' && !this.hasPermission('investor.view')) {
+        codesToAssign.push('investor.view');
+      }
+
+      const requests = codesToAssign.map(c =>
+        this.permissionService.assign({ userId, permissionCode: c })
+      );
+
+      forkJoin(requests).subscribe({
         next: () => {
-          this.userPermCodes = [...this.userPermCodes, code];
+          this.userPermCodes = [...this.userPermCodes, ...codesToAssign];
           this.permBusy = false;
-          this.toastr.success(`Permission '${code}' assigned.`);
+          codesToAssign.forEach(c => this.toastr.success(`Permission '${c}' assigned.`));
         },
         error: () => {
           this.permBusy = false;

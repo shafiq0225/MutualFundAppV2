@@ -1,4 +1,4 @@
-﻿using MutualFund.Investment.Application.Statements.Commands;
+using MutualFund.Investment.Application.Statements.Commands;
 using MutualFund.Investment.Application.Statements.Dtos;
 using MutualFund.Investment.Application.Statements.Queries;
 using Microsoft.AspNetCore.Authorization;
@@ -34,7 +34,7 @@ namespace MutualFund.Investment.API.Controllers
         /// User: own statements only.
         /// </summary>
         [HttpGet]
-        [Authorize(Policy = "AnyRole")]
+        [Authorize(Policy = "CanViewOrders")]
         public async Task<IActionResult> GetAll()
         {
             if (IsAdmin || IsEmployee)
@@ -65,7 +65,7 @@ namespace MutualFund.Investment.API.Controllers
         /// Admin/Employee only.
         /// </summary>
         [HttpGet("investor/{userId}")]
-        [Authorize(Policy = "AdminOrEmployee")]
+        [Authorize(Policy = "CanViewAllOrders")]
         public async Task<IActionResult> GetByInvestor(string userId)
         {
             var result = await _getStatements
@@ -82,7 +82,7 @@ namespace MutualFund.Investment.API.Controllers
         /// Get statement for a specific order.
         /// </summary>
         [HttpGet("order/{orderId:int}")]
-        [Authorize(Policy = "AnyRole")]
+        [Authorize(Policy = "CanViewOrders")]
         public async Task<IActionResult> GetByOrder(int orderId)
         {
             var result = await _getStatements.GetByOrderAsync(orderId);
@@ -99,7 +99,7 @@ namespace MutualFund.Investment.API.Controllers
         /// Opens PDF in browser tab — no download.
         /// </summary>
         [HttpGet("{id:int}/view")]
-        [Authorize(Policy = "AnyRole")]
+        [Authorize(Policy = "CanViewOrders")]
         public async Task<IActionResult> ViewStatement(int id)
         {
             var result = await _downloadStatement.ExecuteAsync(id);
