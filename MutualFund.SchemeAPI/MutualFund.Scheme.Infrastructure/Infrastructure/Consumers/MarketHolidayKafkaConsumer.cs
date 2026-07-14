@@ -46,7 +46,20 @@ namespace MutualFund.Scheme.Infrastructure.Consumers
                 AutoOffsetReset = AutoOffsetReset.Earliest,
                 EnableAutoCommit = false
             };
-            _config.GetSection("Kafka").Bind(consumerConfig);
+            var kafkaSection = _config.GetSection("Kafka");
+            if (!string.IsNullOrEmpty(kafkaSection["SaslUsername"]))
+                consumerConfig.SaslUsername = kafkaSection["SaslUsername"];
+            if (!string.IsNullOrEmpty(kafkaSection["SaslPassword"]))
+                consumerConfig.SaslPassword = kafkaSection["SaslPassword"];
+            if (!string.IsNullOrEmpty(kafkaSection["SaslMechanism"]) && 
+                Enum.TryParse<SaslMechanism>(kafkaSection["SaslMechanism"], true, out var mechanism))
+                consumerConfig.SaslMechanism = mechanism;
+            if (!string.IsNullOrEmpty(kafkaSection["SecurityProtocol"]) && 
+                Enum.TryParse<SecurityProtocol>(kafkaSection["SecurityProtocol"], true, out var protocol))
+                consumerConfig.SecurityProtocol = protocol;
+            if (!string.IsNullOrEmpty(kafkaSection["EnableSslCertificateVerification"]) && 
+                bool.TryParse(kafkaSection["EnableSslCertificateVerification"], out var verify))
+                consumerConfig.EnableSslCertificateVerification = verify;
 
             using var consumer = new ConsumerBuilder<string, string>(consumerConfig).Build();
             consumer.Subscribe(topic);

@@ -29,7 +29,20 @@ namespace MutualFundNav.Infrastructure.Services
                 BrokerAddressFamily = BrokerAddressFamily.V4,
                 MessageMaxBytes = 20_971_520   // 20 MB — AMFI NAV file is ~1.6 MB uncompressed
             };
-            configuration.GetSection("Kafka").Bind(config);
+            var kafkaSection = configuration.GetSection("Kafka");
+            if (!string.IsNullOrEmpty(kafkaSection["SaslUsername"]))
+                config.SaslUsername = kafkaSection["SaslUsername"];
+            if (!string.IsNullOrEmpty(kafkaSection["SaslPassword"]))
+                config.SaslPassword = kafkaSection["SaslPassword"];
+            if (!string.IsNullOrEmpty(kafkaSection["SaslMechanism"]) && 
+                Enum.TryParse<SaslMechanism>(kafkaSection["SaslMechanism"], true, out var mechanism))
+                config.SaslMechanism = mechanism;
+            if (!string.IsNullOrEmpty(kafkaSection["SecurityProtocol"]) && 
+                Enum.TryParse<SecurityProtocol>(kafkaSection["SecurityProtocol"], true, out var protocol))
+                config.SecurityProtocol = protocol;
+            if (!string.IsNullOrEmpty(kafkaSection["EnableSslCertificateVerification"]) && 
+                bool.TryParse(kafkaSection["EnableSslCertificateVerification"], out var verify))
+                config.EnableSslCertificateVerification = verify;
 
             _producer = new ProducerBuilder<string, string>(config)
                 .SetErrorHandler((_, e) =>
