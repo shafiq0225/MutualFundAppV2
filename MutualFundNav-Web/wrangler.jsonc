@@ -6,7 +6,7 @@
     "enabled": true
   },
   "assets": {
-    "directory": "dist/mutualfund-nav-web/browser"
+    "directory": "dist/mutual-fund-nav-ui"
   },
   "compatibility_flags": [
     "nodejs_compat"
