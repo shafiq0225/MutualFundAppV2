@@ -26,24 +26,24 @@ export interface RemoteAppConfig {
 
 export const remoteApps: Record<'scheme' | 'auth' | 'investment' | 'nav', RemoteAppConfig> = {
   scheme: {
-    origin: environment.production ? 'https://shafiq0225-mutualfund-scheme.pages.dev' : 'http://localhost:4205',
+    origin: environment.production ? 'https://shafiq0225-mutualfund-scheme.shafiqahamed-be.workers.dev' : 'http://localhost:4205',
     elementsBundle: '/elements/main.js',
     stylesBundle: '/elements/styles.css',
     tags: ['scheme-list-element', 'scheme-nav-element']
   },
   auth: {
-    origin: environment.production ? 'https://shafiq0225-mutualfund-auth.pages.dev' : 'http://localhost:4202',
+    origin: environment.production ? 'https://shafiq0225-mutualfund-auth.shafiqahamed-be.workers.dev' : 'http://localhost:4202',
     elementsBundle: '/elements/main.js',
     stylesBundle: '/elements/styles.css',
     tags: ['auth-users-element', 'auth-pending-element', 'auth-family-element', 'auth-login-element']
   },
   investment: {
-    origin: environment.production ? 'https://shafiq0225-mutualfund-investment.pages.dev' : 'http://localhost:4203',
+    origin: environment.production ? 'https://shafiq0225-mutualfund-investment.shafiqahamed-be.workers.dev' : 'http://localhost:4203',
     elementsBundle: '/elements/main.js',
     tags: []
   },
   nav: {
-    origin: environment.production ? 'https://shafiq0225-mutualfund-nav.pages.dev' : 'http://localhost:4204',
+    origin: environment.production ? 'https://shafiq0225-mutualfund-nav.shafiqahamed-be.workers.dev' : 'http://localhost:4204',
     elementsBundle: '/elements/main.js',
     tags: []
   }

@@ -1,0 +1,14 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "shafiq0225-mutualfund-auth",
+  "compatibility_date": "2026-07-14",
+  "observability": {
+    "enabled": true
+  },
+  "assets": {
+    "directory": "dist/mutualfund-auth-web/browser"
+  },
+  "compatibility_flags": [
+    "nodejs_compat"
+  ]
+}
