@@ -61,9 +61,21 @@ builder.Services
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
-        policy.AllowAnyOrigin()
+        policy.WithOrigins(
+                "http://localhost:4200",
+                "http://localhost:4202",
+                "http://localhost:4203",
+                "http://localhost:4204",
+                "http://localhost:4205",
+                "https://localhost:7000",
+                "https://shafiq0225-mutualfund-shell.shafiqahamed-be.workers.dev",
+                "https://shafiq0225-mutualfund-auth.shafiqahamed-be.workers.dev",
+                "https://shafiq0225-mutualfund-scheme.shafiqahamed-be.workers.dev",
+                "https://shafiq0225-mutualfund-investment.shafiqahamed-be.workers.dev",
+                "https://shafiq0225-mutualfund-nav.shafiqahamed-be.workers.dev")
               .AllowAnyHeader()
-              .AllowAnyMethod());
+              .AllowAnyMethod()
+              .AllowCredentials());
 });
 
 // ── Ocelot ────────────────────────────────────────────────────────
