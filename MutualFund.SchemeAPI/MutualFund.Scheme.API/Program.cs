@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -146,7 +146,11 @@ try
         {
             var canConnect = await db.Database.CanConnectAsync();
             if (canConnect)
+            {
                 Log.Information("Database connection verified");
+                await db.Database.MigrateAsync();
+                Log.Information("Database migrated successfully");
+            }
             else
                 Log.Fatal("Cannot connect to database — check connection string");
         }

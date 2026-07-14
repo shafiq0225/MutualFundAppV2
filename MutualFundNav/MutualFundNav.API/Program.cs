@@ -5,6 +5,7 @@ using MutualFundNav.API.Extensions;
 using MutualFundNav.API.Middleware;
 using MutualFundNav.API.Workers;
 using Serilog;
+using Microsoft.EntityFrameworkCore;
 
 // ── Bootstrap Serilog immediately so startup errors are captured ───────────
 Log.Logger = new LoggerConfiguration()
@@ -72,7 +73,11 @@ try
         {
             var canConnect = await db.Database.CanConnectAsync();
             if (canConnect)
+            {
                 Log.Information("Database 'MutualFundDbV2' connection verified");
+                await db.Database.MigrateAsync();
+                Log.Information("Database 'MutualFundDbV2' migrated successfully");
+            }
             else
                 Log.Fatal("Cannot connect to 'MutualFundDbV2' — check connection string");
         }
