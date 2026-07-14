@@ -1,4 +1,4 @@
 export const environment = {
-  production: false,
-  apiBaseUrl: 'https://states-barcelona-globe-collaborative.trycloudflare.com'
+  production: true,
+  apiBaseUrl: 'https://mutualfund-gateway-api.onrender.com'
 };
