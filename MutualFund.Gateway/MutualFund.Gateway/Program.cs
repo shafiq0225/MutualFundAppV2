@@ -85,24 +85,28 @@ if (builder.Environment.IsProduction())
                 hostPort["Host"] = authHost;
                 hostPort["Port"] = "443";
                 section["DownstreamScheme"] = "https";
+                section["HttpHandlerOptions:DangerousAcceptAnyServerCertificateValidator"] = "true";
             }
             else if (port == "7003")
             {
                 hostPort["Host"] = investmentHost;
                 hostPort["Port"] = "443";
                 section["DownstreamScheme"] = "https";
+                section["HttpHandlerOptions:DangerousAcceptAnyServerCertificateValidator"] = "true";
             }
             else if (port == "63946")
             {
                 hostPort["Host"] = schemeHost;
                 hostPort["Port"] = "443";
                 section["DownstreamScheme"] = "https";
+                section["HttpHandlerOptions:DangerousAcceptAnyServerCertificateValidator"] = "true";
             }
             else if (port == "63944")
             {
                 hostPort["Host"] = navHost;
                 hostPort["Port"] = "443";
                 section["DownstreamScheme"] = "https";
+                section["HttpHandlerOptions:DangerousAcceptAnyServerCertificateValidator"] = "true";
             }
         }
     }
