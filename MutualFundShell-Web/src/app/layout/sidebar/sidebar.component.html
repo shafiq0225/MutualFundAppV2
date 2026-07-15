@@ -13,6 +13,7 @@
         [routerLink]="item.route"
         routerLinkActive="active"
         [title]="layout.sidebarCollapsed() ? item.label : ''"
+        (click)="layout.closeSidebarOnMobile()"
       >
         <i class="fas" [ngClass]="item.icon"></i>
         @if (!layout.sidebarCollapsed()) {

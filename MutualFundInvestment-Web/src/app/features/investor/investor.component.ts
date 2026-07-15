@@ -38,6 +38,8 @@ interface DonutArc {
   dasharray: string;
   dashoffset: number;
   color: string;
+  label?: string;
+  value?: string;
 }
 
 interface DonutModel {
@@ -338,7 +340,7 @@ export class InvestorComponent implements OnInit {
     });
 
     this.schemeCards = cards.sort((a, b) =>
-      a.schemeName.localeCompare(b.schemeName)
+      b.investedAmount - a.investedAmount
     );
   }
 
@@ -368,7 +370,9 @@ export class InvestorComponent implements OnInit {
       const arc: DonutArc = {
         dasharray: `${len} ${circumference - len}`,
         dashoffset: -offset,
-        color: PERIODS[i].color
+        color: PERIODS[i].color,
+        label: PERIODS[i].label,
+        value: isPercent ? this.signedPct(v) : this.signedRupee(v)
       };
       offset += len;
       return arc;
@@ -472,7 +476,12 @@ export class InvestorComponent implements OnInit {
       rows = rows.filter(r => r.purchaseDate && r.purchaseDate >= this.dateFrom!);
     if (this.dateTo)
       rows = rows.filter(r => r.purchaseDate && r.purchaseDate <= this.dateTo!);
-    return rows;
+
+    return rows.sort((a, b) => {
+      const dateA = a.purchaseDate ? new Date(a.purchaseDate).getTime() : 0;
+      const dateB = b.purchaseDate ? new Date(b.purchaseDate).getTime() : 0;
+      return dateB - dateA;
+    });
   }
 
   get ledgerTotals() {

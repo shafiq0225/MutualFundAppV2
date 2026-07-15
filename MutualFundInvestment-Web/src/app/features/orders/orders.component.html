@@ -95,9 +95,11 @@
     <div class="section">
       <div class="section-head">
         <h2 class="section-title">{{ ordersTitle }}</h2>
-        <span class="section-sub">Tap the action icon to view status &amp; take the next step</span>
+        <span class="section-sub">Tap any row or card to view status &amp; take the next step</span>
       </div>
-      <div class="ledger-wrap">
+
+      <!-- Desktop View -->
+      <div class="ledger-wrap desktop-only">
         <table class="orders">
           <thead>
             <tr>
@@ -108,7 +110,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr *ngFor="let o of filtered">
+            <tr *ngFor="let o of filtered" class="cursor-pointer" (click)="openDrawer(o)">
               <td class="num">{{ o.orderNumber }}</td>
               <td>
                 <div class="investor-cell">
@@ -127,7 +129,7 @@
               <td class="num-col">{{ o.unitsAllotted ? (o.unitsAllotted | number:'1.3-3') : '—' }}</td>
               <td class="folio">{{ o.folioNumber || '—' }}</td>
               <td>
-                <button class="icon-btn" (click)="openDrawer(o)" title="View details">&#8942;</button>
+                <button class="icon-btn" (click)="openDrawer(o); $event.stopPropagation()" title="View details">&#8942;</button>
               </td>
             </tr>
             <tr *ngIf="!filtered.length">
@@ -136,6 +138,47 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Mobile View -->
+      <div class="orders-mobile-cards mobile-only">
+        <ng-container *ngIf="filtered.length; else noMobileOrders">
+          <div class="mobile-card" *ngFor="let o of filtered" (click)="openDrawer(o)">
+            <div class="mcard-header">
+              <span class="mcard-no">#{{ o.orderNumber }}</span>
+              <span class="stamp" [ngClass]="displayStatus(o.status).cls">{{ displayStatus(o.status).label }}</span>
+            </div>
+            <div class="mcard-body">
+              <div class="mcard-title">{{ o.schemeName }}</div>
+              <div class="mcard-investor">
+                <div class="avatar">{{ initials(o.investorName) }}</div>
+                <span>{{ o.investorName }}</span>
+              </div>
+              <div class="mcard-stats">
+                <div>
+                  <span class="mcard-label">Amount</span>
+                  <span class="mcard-value num">₹{{ o.investedAmount | number:'1.2-2' }}</span>
+                </div>
+                <div>
+                  <span class="mcard-label">Date</span>
+                  <span class="mcard-value">{{ o.orderDate | date:'dd MMM yyyy' }}</span>
+                </div>
+                <div>
+                  <span class="mcard-label">Payment</span>
+                  <span class="mcard-value">{{ o.paymentMode }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="mcard-footer">
+              <span class="mcard-folio">Folio: {{ o.folioNumber || '—' }}</span>
+              <span class="mcard-action-hint">Tap to view details & actions →</span>
+            </div>
+          </div>
+        </ng-container>
+        <ng-template #noMobileOrders>
+          <div class="empty-note">No orders match this selection.</div>
+        </ng-template>
+      </div>
+
     </div>
 
   </div>

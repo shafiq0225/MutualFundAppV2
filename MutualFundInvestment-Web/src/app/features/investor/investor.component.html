@@ -2,13 +2,16 @@
 
 <!-- ===== Reusable donut + legend templates ===== -->
 <ng-template #donutTpl let-d>
-  <svg [attr.width]="d.size" [attr.height]="d.size" [attr.viewBox]="'0 0 ' + d.size + ' ' + d.size">
+  <svg [attr.width]="d.size" [attr.height]="d.size" [attr.viewBox]="'0 0 ' + d.size + ' ' + d.size" class="donut-chart">
     <circle [attr.cx]="d.cx" [attr.cy]="d.cy" [attr.r]="d.r" fill="none"
             stroke="rgba(255,255,255,0.08)" [attr.stroke-width]="d.thickness"></circle>
     <circle *ngFor="let a of d.arcs" [attr.cx]="d.cx" [attr.cy]="d.cy" [attr.r]="d.r" fill="none"
             [attr.stroke]="a.color" [attr.stroke-width]="d.thickness"
             [attr.stroke-dasharray]="a.dasharray" [attr.stroke-dashoffset]="a.dashoffset"
-            [attr.transform]="'rotate(-90 ' + d.cx + ' ' + d.cy + ')'"></circle>
+            [attr.transform]="'rotate(-90 ' + d.cx + ' ' + d.cy + ')'"
+            class="donut-segment">
+      <title>{{ a.label }}: {{ a.value }}</title>
+    </circle>
   </svg>
 </ng-template>
 
@@ -186,7 +189,8 @@
       </div>
     </div>
 
-    <div class="ledger-table-wrap" *ngIf="selectedScheme">
+    <!-- Desktop Ledger Table View -->
+    <div class="ledger-table-wrap desktop-only" *ngIf="selectedScheme">
       <table class="ledger">
         <thead>
           <tr>
@@ -219,6 +223,81 @@
         </tfoot>
       </table>
       <div class="empty-row" *ngIf="!filteredLedgerRows.length">No transactions in this date range.</div>
+    </div>
+
+    <!-- Mobile Ledger Cards View -->
+    <div class="ledger-mobile-cards mobile-only" *ngIf="selectedScheme">
+      <ng-container *ngIf="filteredLedgerRows.length; else noMobileLedger">
+        <div class="mobile-ledger-card" *ngFor="let r of filteredLedgerRows">
+          <div class="mlcard-header">
+            <span class="mlcard-date">{{ r.purchaseDate | date:'dd MMM yyyy' }}</span>
+            <span class="mlcard-year">Year: {{ r.purchaseYear }}</span>
+          </div>
+          <div class="mlcard-body">
+            <div class="mlcard-grid">
+              <div>
+                <span class="mlcard-label">Invested</span>
+                <span class="mlcard-value num">₹{{ r.investedAmount | number:'1.2-2' }}</span>
+              </div>
+              <div>
+                <span class="mlcard-label">Current Value</span>
+                <span class="mlcard-value num">₹{{ r.currentValue | number:'1.2-2' }}</span>
+              </div>
+              <div>
+                <span class="mlcard-label">P&amp;L</span>
+                <span class="mlcard-value num" [class.gain-text]="r.profitLoss >= 0" [class.loss-text]="r.profitLoss < 0">
+                  {{ r.profitLoss >= 0 ? '+' : '' }}₹{{ r.profitLoss | number:'1.2-2' }}
+                </span>
+              </div>
+              <div>
+                <span class="mlcard-label">Change</span>
+                <span class="mlcard-value num" [class.gain-text]="r.profitLoss >= 0" [class.loss-text]="r.profitLoss < 0">
+                  {{ r.profitLossPercent >= 0 ? '+' : '' }}{{ r.profitLossPercent | number:'1.2-2' }}%
+                </span>
+              </div>
+            </div>
+
+            <details class="mlcard-details">
+              <summary>View NAV &amp; Unit details</summary>
+              <div class="details-content">
+                <div><span>Units:</span><b class="num">{{ r.units | number:'1.3-3' }}</b></div>
+                <div><span>Purchase NAV:</span><b class="num">₹{{ r.purchaseNAV | number:'1.4-4' }}</b></div>
+                <div><span>Current NAV:</span><b class="num">₹{{ r.currentNAV | number:'1.4-4' }}</b></div>
+              </div>
+            </details>
+          </div>
+        </div>
+
+        <!-- Mobile Total Summary Card -->
+        <div class="mobile-ledger-total-card">
+          <div class="total-label">Total Summary</div>
+          <div class="total-grid">
+            <div>
+              <span>Total Invested</span>
+              <b class="num">₹{{ ledgerTotals.invested | number:'1.2-2' }}</b>
+            </div>
+            <div>
+              <span>Total Value</span>
+              <b class="num">₹{{ ledgerTotals.currentValue | number:'1.2-2' }}</b>
+            </div>
+            <div>
+              <span>Total P&amp;L</span>
+              <b class="num" [class.gain-text]="ledgerTotals.pnl >= 0" [class.loss-text]="ledgerTotals.pnl < 0">
+                {{ ledgerTotals.pnl >= 0 ? '+' : '' }}₹{{ ledgerTotals.pnl | number:'1.2-2' }}
+              </b>
+            </div>
+            <div>
+              <span>Total Change</span>
+              <b class="num" [class.gain-text]="ledgerTotals.pnl >= 0" [class.loss-text]="ledgerTotals.pnl < 0">
+                {{ (ledgerTotals.pnl / ledgerTotals.invested * 100) | number:'1.2-2' }}%
+              </b>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+      <ng-template #noMobileLedger>
+        <div class="empty-note">No transactions in this date range.</div>
+      </ng-template>
     </div>
   </div>
 
