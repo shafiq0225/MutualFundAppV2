@@ -71,11 +71,13 @@ namespace MutualFundNav.API.Workers
         {
             try
             {
+                var tz = GetIstTimeZone();
+                var nowIst = TimeZoneInfo.ConvertTime(DateTime.UtcNow, tz);
                 var scheduleTime = TimeSpan.Parse(_config["AppSettings:ScheduleTime"] ?? "08:30:00");
-                var scheduledToday = DateTime.Today.Add(scheduleTime);
+                var scheduledToday = nowIst.Date.Add(scheduleTime);
 
                 // If scheduled time hasn't passed yet — nothing missed
-                if (DateTime.Now < scheduledToday)
+                if (nowIst < scheduledToday)
                 {
                     _logger.LogInformation(
                         "Startup check: scheduled time {Time} not yet reached — no missed run",
@@ -90,7 +92,7 @@ namespace MutualFundNav.API.Workers
                 // Check if a job already ran successfully today
                 var latestJob = await uow.JobLogs.GetLatestAsync();
                 bool jobRanToday = latestJob is not null
-                    && latestJob.StartedAt.Date == DateTime.UtcNow.Date
+                    && TimeZoneInfo.ConvertTime(DateTime.SpecifyKind(latestJob.StartedAt, DateTimeKind.Utc), tz).Date == nowIst.Date
                     && latestJob.IsSuccess;
 
                 if (jobRanToday)
@@ -286,13 +288,28 @@ namespace MutualFundNav.API.Workers
             await uow.CompleteAsync();
         }
 
+        private static TimeZoneInfo GetIstTimeZone()
+        {
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+            }
+            catch
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("Asia/Kolkata");
+            }
+        }
+
         private DateTime ComputeNextRun()
         {
+            var tz = GetIstTimeZone();
+            var nowIst = TimeZoneInfo.ConvertTime(DateTime.UtcNow, tz);
             var scheduleTime = TimeSpan.Parse(
                 _config["AppSettings:ScheduleTime"] ?? "08:30:00");
-            var next = DateTime.Today.Add(scheduleTime);
-            if (DateTime.Now >= next) next = next.AddDays(1);
-            return next;
+            var nextIst = nowIst.Date.Add(scheduleTime);
+            if (nowIst >= nextIst) nextIst = nextIst.AddDays(1);
+            var nextUtc = TimeZoneInfo.ConvertTimeToUtc(nextIst, tz);
+            return TimeZoneInfo.ConvertTimeFromUtc(nextUtc, TimeZoneInfo.Local);
         }
     }
 }
