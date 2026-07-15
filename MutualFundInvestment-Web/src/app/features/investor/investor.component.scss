@@ -190,7 +190,7 @@ input.date-filter {
 .detail-summary .cell-value { font-size: 17px; }
 
 .ledger-table-wrap {
-  background: var(--paper); border: 1px solid var(--line-soft); border-radius: 6px; overflow: hidden;
+  background: var(--paper); border: 1px solid var(--line-soft); border-radius: 6px; overflow-x: auto;
 }
 table.ledger { width: 100%; border-collapse: collapse; font-size: 13px; }
 table.ledger thead th {

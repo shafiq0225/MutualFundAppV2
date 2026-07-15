@@ -11,6 +11,10 @@
   position: sticky;
   top: 0;
   z-index: 10;
+
+  @media (max-width: 576px) {
+    padding: 0 12px;
+  }
 }
 
 .topbar-left {
@@ -24,6 +28,10 @@
   font-size: v.$font-size-xl;
   color: v.$text-primary;
   font-weight: 600;
+
+  @media (max-width: 576px) {
+    font-size: v.$font-size-lg;
+  }
 }
 
 .topbar-actions {
@@ -60,6 +68,10 @@
 
   i.fa-circle-user { font-size: 22px; color: v.$steel; }
   .chevron { font-size: 10px; color: v.$text-muted; }
+
+  @media (max-width: 576px) {
+    span { display: none; }
+  }
 }
 
 .account-menu {

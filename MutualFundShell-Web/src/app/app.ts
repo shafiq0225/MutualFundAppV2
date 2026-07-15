@@ -4,6 +4,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
 import { SidebarComponent } from './layout/sidebar/sidebar.component';
 import { TopbarComponent } from './layout/topbar/topbar.component';
+import { LayoutStateService } from './core/services/layout-state.service';
 
 // Routes that render full-bleed with no sidebar/topbar chrome. Written as
 // prefix checks so a future full-page auth route (password reset, etc.)
@@ -22,6 +23,7 @@ function isChromeLess(url: string): boolean {
   styleUrl: './app.scss'
 })
 export class ShellRoot {
+  readonly layout = inject(LayoutStateService);
   private readonly router = inject(Router);
 
   showChrome = toSignal(
