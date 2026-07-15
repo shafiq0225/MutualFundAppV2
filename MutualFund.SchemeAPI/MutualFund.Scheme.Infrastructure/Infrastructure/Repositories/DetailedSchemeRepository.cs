@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using MutualFund.Scheme.Domain.Entities;
 using MutualFund.Scheme.Domain.Interfaces;
 using MutualFund.Scheme.Infrastructure.Data;
@@ -50,6 +50,7 @@ namespace MutualFund.Scheme.Infrastructure.Repositories
             DateTime startDate, DateTime endDate)
         {
             var inRange = await _context.DetailedSchemes
+                .AsNoTracking()
                 .Where(d => d.IsApproved
                          && d.NavDate >= startDate.Date
                          && d.NavDate <= endDate.Date)
@@ -58,16 +59,28 @@ namespace MutualFund.Scheme.Infrastructure.Repositories
             var schemeCodes = inRange.Select(d => d.SchemeCode).Distinct().ToList();
             var previousRecords = new List<DetailedScheme>();
 
-            foreach (var schemeCode in schemeCodes)
+            if (schemeCodes.Count > 0)
             {
-                var previous = await _context.DetailedSchemes
-                    .Where(d => d.SchemeCode == schemeCode
-                             && d.NavDate < startDate.Date)
-                    .OrderByDescending(d => d.NavDate)
-                    .FirstOrDefaultAsync();
+                var previousDates = await _context.DetailedSchemes
+                    .AsNoTracking()
+                    .Where(d => schemeCodes.Contains(d.SchemeCode) && d.NavDate < startDate.Date)
+                    .GroupBy(d => d.SchemeCode)
+                    .Select(g => new { SchemeCode = g.Key, MaxDate = g.Max(x => x.NavDate) })
+                    .ToListAsync();
 
-                if (previous != null)
-                    previousRecords.Add(previous);
+                if (previousDates.Count > 0)
+                {
+                    var maxDates = previousDates.Select(pd => pd.MaxDate).Distinct().ToList();
+
+                    var candidateRows = await _context.DetailedSchemes
+                        .AsNoTracking()
+                        .Where(d => schemeCodes.Contains(d.SchemeCode) && maxDates.Contains(d.NavDate))
+                        .ToListAsync();
+
+                    previousRecords = candidateRows
+                        .Where(d => previousDates.Any(pd => pd.SchemeCode == d.SchemeCode && pd.MaxDate == d.NavDate))
+                        .ToList();
+                }
             }
 
             return inRange
@@ -79,6 +92,7 @@ namespace MutualFund.Scheme.Infrastructure.Repositories
 
         public async Task<List<DateTime>> GetLastTradingDatesAsync(int count) =>
             await _context.DetailedSchemes
+                .AsNoTracking()
                 .Where(d => d.IsApproved)
                 .Select(d => d.NavDate)
                 .Distinct()
@@ -89,6 +103,7 @@ namespace MutualFund.Scheme.Infrastructure.Repositories
         public async Task<IEnumerable<DetailedScheme>> GetNavHistoryBySchemeCodeAsync(
             string schemeCode, DateTime fromDate) =>
             await _context.DetailedSchemes
+                .AsNoTracking()
                 .Where(d => d.SchemeCode == schemeCode
                          && d.NavDate >= fromDate)
                 .OrderByDescending(d => d.NavDate)

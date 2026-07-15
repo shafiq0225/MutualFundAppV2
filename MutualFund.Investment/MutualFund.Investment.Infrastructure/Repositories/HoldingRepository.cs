@@ -1,4 +1,4 @@
-﻿using MutualFund.Investment.Domain.Entities;
+using MutualFund.Investment.Domain.Entities;
 using MutualFund.Investment.Domain.Interfaces;
 using MutualFund.Investment.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -25,6 +25,7 @@ namespace MutualFund.Investment.Infrastructure.Repositories
         public async Task<Holding?> GetByIdAsync(int id)
         {
             return await _context.Holdings
+                .AsNoTracking()
                 .Include(h => h.Order)
                 .FirstOrDefaultAsync(h => h.Id == id);
         }
@@ -32,6 +33,7 @@ namespace MutualFund.Investment.Infrastructure.Repositories
         public async Task<Holding?> GetByOrderIdAsync(int orderId)
         {
             return await _context.Holdings
+                .AsNoTracking()
                 .Include(h => h.Order)
                 .FirstOrDefaultAsync(h => h.OrderId == orderId);
         }
@@ -39,6 +41,7 @@ namespace MutualFund.Investment.Infrastructure.Repositories
         public async Task<IEnumerable<Holding>> GetAllActiveAsync()
         {
             return await _context.Holdings
+                .AsNoTracking()
                 .Include(h => h.Order)
                 .Where(h => h.IsActive)
                 .OrderBy(h => h.InvestorName)
@@ -50,6 +53,7 @@ namespace MutualFund.Investment.Infrastructure.Repositories
             string investorUserId)
         {
             return await _context.Holdings
+                .AsNoTracking()
                 .Include(h => h.Order)
                 .Where(h => h.InvestorUserId == investorUserId
                          && h.IsActive)
@@ -74,6 +78,7 @@ namespace MutualFund.Investment.Infrastructure.Repositories
         public async Task<IEnumerable<Holding>> GetAllByInvestorActiveAsync(string investorUserId)
         {
             return await _context.Holdings
+                .AsNoTracking()
                 .Include(h => h.Order)
                 .Where(h => h.InvestorUserId == investorUserId
                          && h.IsActive)
@@ -84,6 +89,7 @@ namespace MutualFund.Investment.Infrastructure.Repositories
         public async Task<IEnumerable<Holding>> GetAllActiveGroupedAsync()
         {
             return await _context.Holdings
+                .AsNoTracking()
                 .Include(h => h.Order)
                 .Where(h => h.IsActive)
                 .OrderBy(h => h.InvestorName)

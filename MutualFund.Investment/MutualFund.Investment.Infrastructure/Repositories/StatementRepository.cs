@@ -1,4 +1,4 @@
-﻿using MutualFund.Investment.Domain.Entities;
+using MutualFund.Investment.Domain.Entities;
 using MutualFund.Investment.Domain.Interfaces;
 using MutualFund.Investment.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -26,6 +26,7 @@ namespace MutualFund.Investment.Infrastructure.Repositories
         public async Task<InvestmentStatement?> GetByIdAsync(int id)
         {
             return await _context.InvestmentStatements
+                .AsNoTracking()
                 .Include(s => s.Order)
                 .FirstOrDefaultAsync(s => s.Id == id);
         }
@@ -33,6 +34,7 @@ namespace MutualFund.Investment.Infrastructure.Repositories
         public async Task<InvestmentStatement?> GetByOrderIdAsync(int orderId)
         {
             return await _context.InvestmentStatements
+                .AsNoTracking()
                 .Include(s => s.Order)
                 .FirstOrDefaultAsync(s => s.OrderId == orderId);
         }
@@ -41,6 +43,7 @@ namespace MutualFund.Investment.Infrastructure.Repositories
             string investorUserId)
         {
             return await _context.InvestmentStatements
+                .AsNoTracking()
                 .Include(s => s.Order)
                 .Where(s => s.InvestorUserId == investorUserId)
                 .OrderByDescending(s => s.UploadedAt)
@@ -50,6 +53,7 @@ namespace MutualFund.Investment.Infrastructure.Repositories
         public async Task<IEnumerable<InvestmentStatement>> GetAllAsync()
         {
             return await _context.InvestmentStatements
+                .AsNoTracking()
                 .Include(s => s.Order)
                 .OrderByDescending(s => s.UploadedAt)
                 .ToListAsync();

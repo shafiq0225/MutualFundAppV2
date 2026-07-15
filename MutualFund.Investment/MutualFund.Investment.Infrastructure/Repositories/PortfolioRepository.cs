@@ -1,4 +1,4 @@
-﻿using MutualFund.Investment.Domain.Entities;
+using MutualFund.Investment.Domain.Entities;
 using MutualFund.Investment.Domain.Interfaces;
 using MutualFund.Investment.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +31,7 @@ namespace MutualFund.Investment.Infrastructure.Repositories
             int holdingId)
         {
             return await _context.PortfolioSnapshots
+                .AsNoTracking()
                 .Where(s => s.HoldingId == holdingId)
                 .OrderByDescending(s => s.SnapshotDate)
                 .FirstOrDefaultAsync();
@@ -42,25 +43,40 @@ namespace MutualFund.Investment.Infrastructure.Repositories
         {
             var targetDate = date?.Date ?? DateTime.UtcNow.Date;
 
-            // Get all holdings for this investor
+            // Get all active holdings for this investor
             var holdingIds = await _context.Holdings
+                .AsNoTracking()
                 .Where(h => h.InvestorUserId == investorUserId && h.IsActive)
                 .Select(h => h.Id)
                 .ToListAsync();
 
-            // For each holding, get the latest snapshot on or before targetDate
             var snapshots = new List<PortfolioSnapshot>();
 
-            foreach (var holdingId in holdingIds)
+            if (holdingIds.Count > 0)
             {
-                var snapshot = await _context.PortfolioSnapshots
-                    .Where(s => s.HoldingId == holdingId
-                             && s.SnapshotDate <= targetDate)
-                    .OrderByDescending(s => s.SnapshotDate)
-                    .FirstOrDefaultAsync();
+                // Get the latest snapshot date for each holding in 1 query
+                var maxDates = await _context.PortfolioSnapshots
+                    .AsNoTracking()
+                    .Where(s => holdingIds.Contains(s.HoldingId) && s.SnapshotDate <= targetDate)
+                    .GroupBy(s => s.HoldingId)
+                    .Select(g => new { HoldingId = g.Key, MaxDate = g.Max(x => x.SnapshotDate) })
+                    .ToListAsync();
 
-                if (snapshot != null)
-                    snapshots.Add(snapshot);
+                if (maxDates.Count > 0)
+                {
+                    var maxDatesList = maxDates.Select(m => m.MaxDate).Distinct().ToList();
+
+                    // Query candidate snapshots in 1 query
+                    var candidateSnapshots = await _context.PortfolioSnapshots
+                        .AsNoTracking()
+                        .Where(s => holdingIds.Contains(s.HoldingId) && maxDatesList.Contains(s.SnapshotDate))
+                        .ToListAsync();
+
+                    // Filter exactly matching HoldingId + MaxDate in memory
+                    snapshots = candidateSnapshots
+                        .Where(s => maxDates.Any(m => m.HoldingId == s.HoldingId && m.MaxDate == s.SnapshotDate))
+                        .ToList();
+                }
             }
 
             return snapshots.OrderBy(s => s.SchemeName);
@@ -70,21 +86,38 @@ namespace MutualFund.Investment.Infrastructure.Repositories
         {
             // Get all active holding IDs
             var holdingIds = await _context.Holdings
+                .AsNoTracking()
                 .Where(h => h.IsActive)
                 .Select(h => h.Id)
                 .ToListAsync();
 
             var snapshots = new List<PortfolioSnapshot>();
 
-            foreach (var holdingId in holdingIds)
+            if (holdingIds.Count > 0)
             {
-                var snapshot = await _context.PortfolioSnapshots
-                    .Where(s => s.HoldingId == holdingId)
-                    .OrderByDescending(s => s.SnapshotDate)
-                    .FirstOrDefaultAsync();
+                // Get the latest snapshot date for each holding in 1 query
+                var maxDates = await _context.PortfolioSnapshots
+                    .AsNoTracking()
+                    .Where(s => holdingIds.Contains(s.HoldingId))
+                    .GroupBy(s => s.HoldingId)
+                    .Select(g => new { HoldingId = g.Key, MaxDate = g.Max(x => x.SnapshotDate) })
+                    .ToListAsync();
 
-                if (snapshot != null)
-                    snapshots.Add(snapshot);
+                if (maxDates.Count > 0)
+                {
+                    var maxDatesList = maxDates.Select(m => m.MaxDate).Distinct().ToList();
+
+                    // Query candidate snapshots in 1 query
+                    var candidateSnapshots = await _context.PortfolioSnapshots
+                        .AsNoTracking()
+                        .Where(s => holdingIds.Contains(s.HoldingId) && maxDatesList.Contains(s.SnapshotDate))
+                        .ToListAsync();
+
+                    // Filter exactly matching HoldingId + MaxDate in memory
+                    snapshots = candidateSnapshots
+                        .Where(s => maxDates.Any(m => m.HoldingId == s.HoldingId && m.MaxDate == s.SnapshotDate))
+                        .ToList();
+                }
             }
 
             return snapshots

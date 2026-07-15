@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using MutualFund.Scheme.Domain.Entities;
 using MutualFund.Scheme.Domain.Interfaces;
 using MutualFund.Scheme.Infrastructure.Data;
@@ -16,15 +16,18 @@ namespace MutualFund.Scheme.Infrastructure.Repositories
 
         public async Task<IEnumerable<SchemeEnrollment>> GetAllAsync() =>
             await _context.SchemeEnrollments
+                .AsNoTracking()
                 .OrderBy(s => s.SchemeCode)
                 .ToListAsync();
 
         public async Task<SchemeEnrollment?> GetBySchemeCodeAsync(string schemeCode) =>
             await _context.SchemeEnrollments
+                .AsNoTracking()
                 .FirstOrDefaultAsync(s => s.SchemeCode == schemeCode);
 
         public async Task<IEnumerable<SchemeEnrollment>> GetApprovedSchemesAsync() =>
             await _context.SchemeEnrollments
+                .AsNoTracking()
                 .Where(s => s.IsApproved)
                 .OrderBy(s => s.SchemeCode)
                 .ToListAsync();

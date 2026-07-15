@@ -1,4 +1,4 @@
-﻿using MutualFund.Investment.Domain.Entities;
+using MutualFund.Investment.Domain.Entities;
 using MutualFund.Investment.Domain.Enums;
 using MutualFund.Investment.Domain.Interfaces;
 using MutualFund.Investment.Infrastructure.Data;
@@ -26,6 +26,7 @@ namespace MutualFund.Investment.Infrastructure.Repositories
         public async Task<InvestmentOrder?> GetByIdAsync(int id)
         {
             return await _context.InvestmentOrders
+                .AsNoTracking()
                 .Include(o => o.Holding)
                 .Include(o => o.Statement)
                 .FirstOrDefaultAsync(o => o.Id == id);
@@ -35,6 +36,7 @@ namespace MutualFund.Investment.Infrastructure.Repositories
             string orderNumber)
         {
             return await _context.InvestmentOrders
+                .AsNoTracking()
                 .Include(o => o.Holding)
                 .Include(o => o.Statement)
                 .FirstOrDefaultAsync(o => o.OrderNumber == orderNumber);
@@ -43,6 +45,7 @@ namespace MutualFund.Investment.Infrastructure.Repositories
         public async Task<IEnumerable<InvestmentOrder>> GetAllAsync()
         {
             return await _context.InvestmentOrders
+                .AsNoTracking()
                 .Include(o => o.Holding)
                 .Include(o => o.Statement)
                 .OrderByDescending(o => o.CreatedAt)
@@ -53,6 +56,7 @@ namespace MutualFund.Investment.Infrastructure.Repositories
             string investorUserId)
         {
             return await _context.InvestmentOrders
+                .AsNoTracking()
                 .Include(o => o.Holding)
                 .Include(o => o.Statement)
                 .Where(o => o.InvestorUserId == investorUserId)
@@ -64,6 +68,7 @@ namespace MutualFund.Investment.Infrastructure.Repositories
             OrderStatus status)
         {
             return await _context.InvestmentOrders
+                .AsNoTracking()
                 .Include(o => o.Holding)
                 .Include(o => o.Statement)
                 .Where(o => o.Status == status)
