@@ -19,6 +19,11 @@ $sidebar-width-collapsed: v.$sidebar-collapsed;
     width: $sidebar-width-collapsed;
     min-width: $sidebar-width-collapsed;
 
+    .brand {
+      justify-content: center;
+      padding: 0;
+    }
+
     .nav-item { justify-content: center; }
   }
 
@@ -58,8 +63,21 @@ $sidebar-width-collapsed: v.$sidebar-collapsed;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   white-space: nowrap;
 
-  i { color: v.$gold; }
-  em { font-style: normal; color: v.$gold; font-weight: 600; }
+  .brand-logo {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+  }
+
+  .brand-text {
+    font-weight: 500;
+    letter-spacing: 0.5px;
+
+    .gold-text {
+      color: v.$gold;
+      font-weight: 700;
+    }
+  }
 }
 
 .nav-list {

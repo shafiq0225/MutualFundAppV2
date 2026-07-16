@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ToastrService } from 'ngx-toastr';
@@ -61,6 +61,9 @@ export class OrdersComponent implements OnInit {
   submittingOrder = false;
   existingFoliosForSelection: string[] = [];
   useNewFolio = false;
+
+  schemeFilterOptions: { code: string; name: string }[] = [];
+  schemeSummaries: { schemeCode: string; schemeName: string; count: number; invested: number }[] = [];
 
   // ── Drawer (order detail + timeline) ─────────────────────────
   showDrawer = false;
@@ -140,6 +143,7 @@ export class OrdersComponent implements OnInit {
           this.loadRelationships();
         }
 
+        this.computeSchemeData();
         this.applyFilters();
         this.loading = false;
       },
@@ -188,6 +192,7 @@ export class OrdersComponent implements OnInit {
   }
 
   onInvestorChange(): void {
+    this.computeSchemeData();
     if (!this.schemeFilterOptions.some(s => s.code === this.schemeFilter)) {
       this.schemeFilter = 'all';
     }
@@ -210,15 +215,7 @@ export class OrdersComponent implements OnInit {
     return head ? `${head} & Family Members` : 'All Investors';
   }
 
-  /** Schemes present in the orders of the currently-selected investor scope. */
-  get schemeFilterOptions(): { code: string; name: string }[] {
-    const scope = this.investorFilter === 'all'
-      ? this.orders
-      : this.orders.filter(o => o.investorUserId === this.investorFilter);
-    const map = new Map<string, string>();
-    for (const o of scope) map.set(o.schemeCode, o.schemeName);
-    return Array.from(map, ([code, name]) => ({ code, name }));
-  }
+  // Removed schemeFilterOptions getter, computed in computeSchemeData()
 
   // ── Stats ─────────────────────────────────────────────────────
   get totalOrders(): number { return this.filtered.length; }
@@ -246,18 +243,27 @@ export class OrdersComponent implements OnInit {
   }
 
   // ── Scheme-wise summary (clickable filter cards) ───────────────
-  get schemeSummaries(): { schemeCode: string; schemeName: string; count: number; invested: number }[] {
+  computeSchemeData(): void {
     const scope = this.investorFilter === 'all'
       ? this.orders
       : this.orders.filter(o => o.investorUserId === this.investorFilter);
-    const map = new Map<string, { schemeName: string; count: number; invested: number }>();
+
+    // 1. Compute schemeFilterOptions
+    const filterMap = new Map<string, string>();
     for (const o of scope) {
-      const cur = map.get(o.schemeCode) ?? { schemeName: o.schemeName, count: 0, invested: 0 };
+      filterMap.set(o.schemeCode, o.schemeName);
+    }
+    this.schemeFilterOptions = Array.from(filterMap, ([code, name]) => ({ code, name }));
+
+    // 2. Compute schemeSummaries
+    const summaryMap = new Map<string, { schemeName: string; count: number; invested: number }>();
+    for (const o of scope) {
+      const cur = summaryMap.get(o.schemeCode) ?? { schemeName: o.schemeName, count: 0, invested: 0 };
       cur.count++;
       cur.invested += o.investedAmount;
-      map.set(o.schemeCode, cur);
+      summaryMap.set(o.schemeCode, cur);
     }
-    return Array.from(map.entries()).map(([schemeCode, v]) => ({ schemeCode, ...v }));
+    this.schemeSummaries = Array.from(summaryMap.entries()).map(([schemeCode, v]) => ({ schemeCode, ...v }));
   }
 
   selectSchemeCard(schemeCode: string): void {
@@ -390,6 +396,7 @@ export class OrdersComponent implements OnInit {
     }).subscribe({
       next: (order) => {
         this.orders = [order, ...this.orders];
+        this.computeSchemeData();
         this.applyFilters();
         this.toastr.success(`Order ${order.orderNumber} logged successfully.`);
         this.submittingOrder = false;
@@ -499,6 +506,7 @@ export class OrdersComponent implements OnInit {
         if (idx !== -1) this.orders[idx] = updated;
         this.selectedOrder = updated;
         this.stageActionValue = {};
+        this.computeSchemeData();
         this.applyFilters();
         this.toastr.success(
           isFinal
@@ -519,5 +527,15 @@ export class OrdersComponent implements OnInit {
       newStatus: 'Cancelled',
       notes: this.stageActionValue['cancelReason'] || null
     }).subscribe(this.stageUpdateHandlers(this.selectedOrder));
+  }
+
+  @HostListener('document:keydown.escape')
+  handleEscapeKey(): void {
+    if (this.showDrawer) {
+      this.closeDrawer();
+    }
+    if (this.showNewOrderModal) {
+      this.closeNewOrderModal();
+    }
   }
 }

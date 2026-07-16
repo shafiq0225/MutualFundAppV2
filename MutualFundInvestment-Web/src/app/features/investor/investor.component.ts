@@ -461,7 +461,16 @@ export class InvestorComponent implements OnInit {
         (this.selectedUserId === 'family' ||
           h.investorUserId === this.selectedUserId)
     );
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    
+    // Defer scroll slightly to guarantee Angular hides the list view, updates heights, and renders the detail view first.
+    // Try multiple scroll targets to cover different browser and parent shell layouts.
+    setTimeout(() => {
+      const scrollConfig: ScrollToOptions = { top: 0, behavior: 'auto' };
+      window.scrollTo(scrollConfig);
+      document.documentElement.scrollTo(scrollConfig);
+      document.body.scrollTo(scrollConfig);
+      document.querySelector('.shell-content')?.scrollTo(scrollConfig);
+    }, 50);
   }
 
   closeSchemeDetail(): void {

@@ -2,11 +2,19 @@ import {
   HttpRequest,
   HttpHandlerFn,
   HttpEvent,
-  HttpInterceptorFn
+  HttpInterceptorFn,
+  HttpErrorResponse,
+  HttpBackend,
+  HttpClient
 } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { inject } from '@angular/core';
+import { Observable, catchError, switchMap, throwError, NEVER, BehaviorSubject, filter, take } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 const COOKIE_NAME = 'mf_access_token';
+
+let isRefreshing = false;
+const refreshTokenSubject = new BehaviorSubject<string | null>(null);
 
 function readCookie(name: string): string | null {
   const match = document.cookie
@@ -19,20 +27,87 @@ export const authInterceptor: HttpInterceptorFn = (
   req: HttpRequest<unknown>,
   next: HttpHandlerFn
 ): Observable<HttpEvent<unknown>> => {
-  // Cookie first: this same interceptor also ships inside main.elements.ts
-  // and runs inside whichever document embeds it (the shell, at whatever
-  // port), so it needs to read whatever that document's origin can see.
-  // The cookie is shared across localhost ports; localStorage isn't.
+  const backend = inject(HttpBackend);
+  const http = new HttpClient(backend); // Bypasses interceptors to avoid circular injection
+  
   const token = readCookie(COOKIE_NAME) || localStorage.getItem('access_token');
+  const isGatewayRequest = req.url.startsWith(environment.authApiUrl);
+  const isRetry = req.headers.has('X-Token-Retry');
 
-  if (token) {
-    const authReq = req.clone({
+  let authReq = req;
+  if (token && isGatewayRequest) {
+    authReq = req.clone({
       setHeaders: {
         Authorization: `Bearer ${token}`
       }
     });
-    return next(authReq);
   }
 
-  return next(req);
+  return next(authReq).pipe(
+    catchError((error) => {
+      if (error instanceof HttpErrorResponse && error.status === 401 && isGatewayRequest && !isRetry) {
+        return handle401Error(authReq, next, http);
+      }
+      return throwError(() => error);
+    })
+  );
 };
+
+function handle401Error(req: HttpRequest<unknown>, next: HttpHandlerFn, http: HttpClient): Observable<HttpEvent<unknown>> {
+  if (!isRefreshing) {
+    isRefreshing = true;
+    refreshTokenSubject.next(null);
+
+    const refreshToken = localStorage.getItem('refresh_token');
+    if (!refreshToken) {
+      isRefreshing = false;
+      document.cookie = `${COOKIE_NAME}=; path=/; max-age=0; SameSite=Lax`;
+      window.location.href = '/login';
+      return NEVER;
+    }
+
+    return http.post<any>(`${environment.authApiUrl}/api/auth/refresh`, { refreshToken }).pipe(
+      switchMap((res: any) => {
+        isRefreshing = false;
+
+        localStorage.setItem('access_token', res.accessToken);
+        localStorage.setItem('refresh_token', res.refreshToken);
+
+        const maxAge = res.expiresIn && res.expiresIn > 0 ? res.expiresIn : 60 * 60 * 8;
+        document.cookie = `${COOKIE_NAME}=${encodeURIComponent(res.accessToken)}; path=/; max-age=${maxAge}; SameSite=Lax`;
+
+        refreshTokenSubject.next(res.accessToken);
+
+        return next(req.clone({
+          setHeaders: { 
+            Authorization: `Bearer ${res.accessToken}`,
+            'X-Token-Retry': 'true'
+          }
+        }));
+      }),
+      catchError((err) => {
+        isRefreshing = false;
+        
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        document.cookie = `${COOKIE_NAME}=; path=/; max-age=0; SameSite=Lax`;
+
+        window.location.href = '/login';
+        return NEVER;
+      })
+    );
+  } else {
+    return refreshTokenSubject.pipe(
+      filter(token => token !== null),
+      take(1),
+      switchMap(token => {
+        return next(req.clone({
+          setHeaders: { 
+            Authorization: `Bearer ${token}`,
+            'X-Token-Retry': 'true'
+          }
+        }));
+      })
+    );
+  }
+}

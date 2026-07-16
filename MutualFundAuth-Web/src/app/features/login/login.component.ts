@@ -51,7 +51,9 @@ export class LoginComponent {
     this.authService.login(loginDto).subscribe({
       next: () => {
         this.toastr.success('Login successful');
-        this.router?.navigate(['/users']);
+        if (this.loginSuccess.observers.length === 0) {
+          this.router?.navigate(['/users']);
+        }
         this.loginSuccess.emit();
       },
       error: (error) => {

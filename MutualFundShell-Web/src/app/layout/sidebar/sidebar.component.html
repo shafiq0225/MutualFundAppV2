@@ -1,8 +1,11 @@
 <aside class="sidebar" [class.collapsed]="layout.sidebarCollapsed()">
   <div class="brand">
-    <i class="fas fa-building-columns"></i>
+    <svg class="brand-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" xmlns="http://www.w3.org/2000/svg">
+      <path d="M3 12H7L9 5L13 19L15 10L17 14H21" stroke="var(--gold, #C08A2E)" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="21" cy="14" r="1.5" fill="#fff" />
+    </svg>
     @if (!layout.sidebarCollapsed()) {
-      <span class="brand-text">MutualFund<em>Passbook</em></span>
+      <span class="brand-text">Wealth<span class="gold-text">Pass</span></span>
     }
   </div>
 
