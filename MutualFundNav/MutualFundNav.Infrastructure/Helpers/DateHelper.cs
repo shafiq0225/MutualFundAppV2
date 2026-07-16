@@ -20,7 +20,9 @@ namespace MutualFundNav.Infrastructure.Helpers
 
         public async Task<DateTime> GetTargetNavDateAsync()
         {
-            var candidate = DateTime.Today.AddDays(-1);
+            var tz = GetIstTimeZone();
+            var todayIst = TimeZoneInfo.ConvertTime(DateTime.UtcNow, tz).Date;
+            var candidate = todayIst.AddDays(-1);
 
             while (!await IsTradingDayAsync(candidate))
             {
@@ -29,6 +31,18 @@ namespace MutualFundNav.Infrastructure.Helpers
             }
 
             return candidate;
+        }
+
+        private static TimeZoneInfo GetIstTimeZone()
+        {
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+            }
+            catch
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("Asia/Kolkata");
+            }
         }
 
         public async Task<bool> IsTradingDayAsync(DateTime date)

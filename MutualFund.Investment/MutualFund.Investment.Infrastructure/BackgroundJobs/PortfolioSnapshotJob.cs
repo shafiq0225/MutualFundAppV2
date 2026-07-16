@@ -1,4 +1,4 @@
-﻿using MutualFund.Investment.Application.Portfolio.Commands;
+using MutualFund.Investment.Application.Portfolio.Commands;
 using Microsoft.Extensions.Logging;
 using Quartz;
 
@@ -38,7 +38,11 @@ namespace MutualFund.Investment.Infrastructure.BackgroundJobs
 
             try
             {
-                var result = await _command.ExecuteAsync(DateTime.Today);
+                var tz = GetIstTimeZone();
+                var todayIst = TimeZoneInfo.ConvertTime(DateTime.UtcNow, tz).Date;
+                var targetDate = todayIst.AddDays(-1);
+
+                var result = await _command.ExecuteAsync(targetDate);
 
                 if (result.IsSuccess && result.Data != null)
                 {
@@ -86,6 +90,18 @@ namespace MutualFund.Investment.Infrastructure.BackgroundJobs
             _logger.LogInformation("Portfolio Snapshot Job Completed");
             _logger.LogInformation(
                 "============================================");
+        }
+
+        private static TimeZoneInfo GetIstTimeZone()
+        {
+            try
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
+            }
+            catch
+            {
+                return TimeZoneInfo.FindSystemTimeZoneById("Asia/Kolkata");
+            }
         }
     }
 }
