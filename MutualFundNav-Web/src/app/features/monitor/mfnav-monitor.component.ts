@@ -205,10 +205,19 @@ export class MfNavMonitorComponent implements OnInit, OnDestroy {
 
     private updateCountdown(): void {
         const now = new Date();
-        const next = new Date();
-        next.setHours(5, 0, 0, 0);
-        if (now >= next) next.setDate(next.getDate() + 1);
-        const diff = next.getTime() - now.getTime();
+        
+        // Convert client time to IST (UTC + 5:30)
+        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const istNow = new Date(utc + (3600000 * 5.5));
+        
+        const istNext = new Date(istNow);
+        istNext.setHours(5, 0, 0, 0);
+        
+        if (istNow >= istNext) {
+            istNext.setDate(istNext.getDate() + 1);
+        }
+        
+        const diff = istNext.getTime() - istNow.getTime();
         const h = Math.floor(diff / 3600000);
         const m = Math.floor((diff % 3600000) / 60000);
         const s = Math.floor((diff % 60000) / 1000);
@@ -234,20 +243,28 @@ export class MfNavMonitorComponent implements OnInit, OnDestroy {
 
     formatDate(dt: string | null): string {
         if (!dt) return '—';
-        return new Date(dt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+        return new Date(dt).toLocaleDateString('en-IN', {
+            day: '2-digit', month: 'short', year: 'numeric',
+            timeZone: 'Asia/Kolkata'
+        });
     }
 
     formatDateTime(dt: string | null): string {
         if (!dt) return '—';
         return new Date(dt).toLocaleString('en-IN', {
             day: '2-digit', month: 'short', year: 'numeric',
-            hour: '2-digit', minute: '2-digit', second: '2-digit'
+            hour: '2-digit', minute: '2-digit', second: '2-digit',
+            timeZone: 'Asia/Kolkata'
         });
     }
 
     formatTime(dt: string | null): string {
         if (!dt) return '';
-        return new Date(dt).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+        return new Date(dt).toLocaleTimeString('en-IN', {
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'Asia/Kolkata'
+        });
     }
 
     formatBytes(bytes: number): string {

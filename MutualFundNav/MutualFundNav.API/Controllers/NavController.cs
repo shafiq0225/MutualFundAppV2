@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using MutualFundNav.Application.UseCases.Commands;
 using MutualFundNav.Domain.Entities;
 using MutualFundNav.Domain.Interfaces;
@@ -49,6 +49,12 @@ namespace MutualFundNav.API.Controllers
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
 
             var targetDate = await _dateHelper.GetTargetNavDateAsync();
+            var latest = await _uow.NavFiles.GetLatestDateAsync();
+            if (latest.HasValue && targetDate <= latest.Value && !replace)
+            {
+                targetDate = latest.Value.AddDays(1);
+            }
+
             _logger.LogInformation("Manual trigger for NAV date {Date}",
                 targetDate.ToString("yyyy-MM-dd"));
 
@@ -161,6 +167,11 @@ namespace MutualFundNav.API.Controllers
         public async Task<IActionResult> GetTargetDate()
         {
             var date = await _dateHelper.GetTargetNavDateAsync();
+            var latest = await _uow.NavFiles.GetLatestDateAsync();
+            if (latest.HasValue && date <= latest.Value)
+            {
+                date = latest.Value.AddDays(1);
+            }
             return Ok(new { targetDate = date.ToString("yyyy-MM-dd") });
         }
 
