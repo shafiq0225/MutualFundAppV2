@@ -1,4 +1,4 @@
-﻿using MutualFund.Investment.API.Extensions;
+using MutualFund.Investment.API.Extensions;
 using MutualFund.Investment.API.Middleware;
 using MutualFund.Investment.Application;
 using MutualFund.Investment.Infrastructure;
@@ -108,6 +108,7 @@ using (var scope = app.Services.CreateScope())
 
 // ── Middleware Pipeline ───────────────────────────────────────────
 app.UseMiddleware<ExceptionMiddleware>();
+app.UseSerilogRequestLogging();
 
 // ── Swagger (Enabled in all environments) ─────────────────────────
 app.UseSwagger();
