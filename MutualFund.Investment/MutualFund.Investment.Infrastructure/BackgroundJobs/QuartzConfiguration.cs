@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Configuration;
 using Quartz;
 
 namespace MutualFund.Investment.Infrastructure.BackgroundJobs
@@ -35,7 +35,8 @@ namespace MutualFund.Investment.Infrastructure.BackgroundJobs
                     $"Fires daily at {hour:D2}:{minute:D2}")
                 .WithCronSchedule(
                     $"0 {minute} {hour} * * ?",
-                    x => x.InTimeZone(GetIstTimeZone()))
+                    x => x.InTimeZone(GetIstTimeZone())
+                          .WithMisfireHandlingInstructionFireAndProceed())
                 .StartNow());
         }
 
