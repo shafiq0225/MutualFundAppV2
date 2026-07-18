@@ -102,8 +102,7 @@ namespace MutualFund.Investment.API.Extensions
                 options.AddPolicy("CanViewAllOrders", policy =>
                     policy.RequireAssertion(ctx =>
                         ctx.User.HasClaim("role", "Admin") ||
-                        (ctx.User.HasClaim("role", "Employee") &&
-                         ctx.User.HasClaim("permissions", "order.view"))));
+                        ctx.User.HasClaim("permissions", "order.view")));
 
                 options.AddPolicy("CanViewInvestorPage", policy =>
                     policy.RequireAssertion(ctx =>
@@ -113,8 +112,7 @@ namespace MutualFund.Investment.API.Extensions
                 options.AddPolicy("CanViewAllPortfolio", policy =>
                     policy.RequireAssertion(ctx =>
                         ctx.User.HasClaim("role", "Admin") ||
-                        (ctx.User.HasClaim("role", "Employee") &&
-                         ctx.User.HasClaim("permissions", "investor.view"))));
+                        ctx.User.HasClaim("permissions", "investor.view")));
 
                 options.AddPolicy("CanRunSnapshot", policy =>
                     policy.RequireAssertion(ctx =>

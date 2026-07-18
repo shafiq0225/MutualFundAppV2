@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 
 namespace MutualFund.Investment.API.Controllers
@@ -21,5 +21,11 @@ namespace MutualFund.Investment.API.Controllers
 
         protected bool IsEmployee =>
             CurrentUserRole == "Employee";
+
+        protected bool CanViewAllOrdersData =>
+            IsAdmin || IsEmployee || User.HasClaim("permissions", "order.view");
+
+        protected bool CanViewAllPortfolioData =>
+            IsAdmin || IsEmployee || User.HasClaim("permissions", "investor.view");
     }
 }

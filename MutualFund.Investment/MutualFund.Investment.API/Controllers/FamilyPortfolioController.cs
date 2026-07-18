@@ -45,7 +45,7 @@ namespace MutualFund.Investment.API.Controllers
         public async Task<IActionResult> GetMemberHoldings(string userId)
         {
             // Non-admin can only see own holdings
-            if (!IsAdmin && !IsEmployee && userId != CurrentUserId)
+            if (!CanViewAllPortfolioData && userId != CurrentUserId)
                 return Forbid();
 
             var result = await _query.GetMemberHoldingsAsync(userId);
@@ -66,7 +66,7 @@ namespace MutualFund.Investment.API.Controllers
             string userId,
             string schemeCode)
         {
-            if (!IsAdmin && !IsEmployee && userId != CurrentUserId)
+            if (!CanViewAllPortfolioData && userId != CurrentUserId)
                 return Forbid();
 
             var result = await _query

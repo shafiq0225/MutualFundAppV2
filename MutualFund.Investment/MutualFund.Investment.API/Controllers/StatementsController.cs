@@ -37,7 +37,7 @@ namespace MutualFund.Investment.API.Controllers
         [Authorize(Policy = "CanViewOrders")]
         public async Task<IActionResult> GetAll()
         {
-            if (IsAdmin || IsEmployee)
+            if (CanViewAllOrdersData)
             {
                 var result = await _getStatements.GetAllAsync();
 

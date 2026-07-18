@@ -44,8 +44,8 @@ namespace MutualFund.Investment.API.Controllers
         {
             string? filterByInvestor = null;
 
-            // Non-admin/employee: only see own orders
-            if (!IsAdmin && !IsEmployee)
+            // Non-admin/employee and no order.view permission: only see own orders
+            if (!CanViewAllOrdersData)
                 filterByInvestor = CurrentUserId;
             else if (!string.IsNullOrWhiteSpace(investorId))
                 filterByInvestor = investorId;
