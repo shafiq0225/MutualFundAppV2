@@ -1,4 +1,4 @@
-﻿using MutualFund.Investment.Domain.Common;
+using MutualFund.Investment.Domain.Common;
 using MutualFund.Investment.Domain.Entities;
 using MutualFund.Investment.Domain.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -39,6 +39,11 @@ namespace MutualFund.Investment.Application.Portfolio.Commands
 
             try
             {
+                // ── Clear existing snapshots for this date to enable recalculation ──
+                _logger.LogInformation("Clearing existing snapshots on {Date} to enable recalculation...", date.ToString("yyyy-MM-dd"));
+                await _unitOfWork.Portfolio.DeleteSnapshotsForDateAsync(date);
+                await _unitOfWork.CompleteAsync();
+
                 // ── Get all active holdings ────────────────────────
                 var holdings = await _unitOfWork.Holdings
                     .GetAllActiveAsync();
@@ -75,15 +80,6 @@ namespace MutualFund.Investment.Application.Portfolio.Commands
 
                 foreach (var holding in holdingList)
                 {
-                    // Skip if snapshot already exists for this date
-                    var exists = await _unitOfWork.Portfolio
-                        .SnapshotExistsAsync(holding.Id, date);
-
-                    if (exists)
-                    {
-                        skipped++;
-                        continue;
-                    }
 
                     // Get current NAV for this scheme
                     if (!latestNavMap.TryGetValue(

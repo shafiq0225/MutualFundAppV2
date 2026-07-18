@@ -133,5 +133,18 @@ namespace MutualFund.Investment.Infrastructure.Repositories
                 .AnyAsync(s => s.HoldingId == holdingId
                             && s.SnapshotDate == date.Date);
         }
+
+        public async Task DeleteSnapshotsForDateAsync(DateTime date)
+        {
+            var targetDate = date.Date;
+            var existing = await _context.PortfolioSnapshots
+                .Where(s => s.SnapshotDate == targetDate)
+                .ToListAsync();
+
+            if (existing.Count > 0)
+            {
+                _context.PortfolioSnapshots.RemoveRange(existing);
+            }
+        }
     }
 }

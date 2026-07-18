@@ -1,4 +1,4 @@
-﻿using MutualFund.Investment.Domain.Entities;
+using MutualFund.Investment.Domain.Entities;
 
 namespace MutualFund.Investment.Domain.Interfaces
 {
@@ -21,5 +21,8 @@ namespace MutualFund.Investment.Domain.Interfaces
 
         Task<bool> SnapshotExistsAsync(int holdingId, DateTime date);
         // Prevents duplicate snapshots for same day
+
+        Task DeleteSnapshotsForDateAsync(DateTime date);
+        // Deletes all snapshots for a specific date (enables recalculation)
     }
 }
